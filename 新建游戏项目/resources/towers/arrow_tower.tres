@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TowerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/tower_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tower_name = "箭塔"
+tower_type = "arrow"
+cost = 100
+damage = Array[float]([20.0, 30.0, 45.0])
+attack_interval = Array[float]([1.0, 0.9, 0.8])
+attack_range = Array[float]([200.0, 220.0, 250.0])
+splash_radius = Array[float]([0.0, 0.0, 0.0])
+slow_percent = Array[float]([0.0, 0.0, 0.0])
+slow_duration = Array[float]([0.0, 0.0, 0.0])
+projectile_speed = 400.0
+upgrade_cost = Array[int]([0, 100, 200])
+colors = Array[Color]([Color(0.2, 0.6, 0.2, 1), Color(0.3, 0.7, 0.3, 1), Color(0.4, 0.8, 0.2, 1)])

@@ -1,0 +1,66 @@
+[gd_resource type="Resource" script_class="LevelData" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/level_data.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/resources/wave_data.gd" id="2_script"]
+
+[sub_resource type="Resource" id="WaveData_wave1"]
+script = ExtResource("2_script")
+monster_type = "goblin"
+count = 20
+spawn_interval = 0.6
+path_index = -1
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave2"]
+script = ExtResource("2_script")
+monster_type = "goblin"
+count = 25
+spawn_interval = 0.5
+path_index = -1
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave3"]
+script = ExtResource("2_script")
+monster_type = "goblin"
+count = 30
+spawn_interval = 0.5
+path_index = -1
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave4"]
+script = ExtResource("2_script")
+monster_type = "goblin"
+count = 35
+spawn_interval = 0.4
+path_index = -1
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave5"]
+script = ExtResource("2_script")
+monster_type = "berserker_goblin"
+count = 10
+spawn_interval = 0.8
+path_index = -1
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave6"]
+script = ExtResource("2_script")
+monster_type = "boss"
+count = 1
+spawn_interval = 2.0
+path_index = -1
+is_boss = true
+
+[resource]
+script = ExtResource("1_script")
+level_name = "十字交叉"
+level_id = 2
+starting_gold = 400
+village_health = 20
+village_position = Vector2(960, 540)
+path_points = [PackedVector2Array(60, 540, 960, 540), PackedVector2Array(960, 60, 960, 540), PackedVector2Array(1860, 540, 960, 540), PackedVector2Array(960, 1020, 960, 540)]
+build_spots = PackedVector2Array(Vector2(300, 360), Vector2(300, 720), Vector2(600, 360), Vector2(600, 720), Vector2(800, 300), Vector2(800, 780), Vector2(1120, 300), Vector2(1120, 780), Vector2(1320, 360), Vector2(1320, 720), Vector2(1620, 360), Vector2(1620, 720), Vector2(960, 300), Vector2(960, 780), Vector2(700, 540), Vector2(1220, 540))
+waves = [SubResource("WaveData_wave1"), SubResource("WaveData_wave2"), SubResource("WaveData_wave3"), SubResource("WaveData_wave4"), SubResource("WaveData_wave5"), SubResource("WaveData_wave6")]
+bg_color = Color(0.15, 0.28, 0.1, 1)
+path_color = Color(0.5, 0.38, 0.22, 1)
+path_width = 50.0

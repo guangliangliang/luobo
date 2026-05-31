@@ -1,0 +1,176 @@
+extends Node2D
+
+signal tower_selected(tower: Node2D)
+
+var tower_data: TowerData
+var tower_level: int = 1
+var tower_type: String = ""
+var _attack_timer: float = 0.0
+var _target: Node2D = null
+var _range_circle_points: PackedVector2Array = []
+var _show_range: bool = false
+var _total_invested: int = 0
+var _battle_root: Node = null
+
+func setup(type: String, data: TowerData) -> void:
+	tower_type = type
+	tower_data = data
+	_total_invested = data.cost
+	_attack_timer = 0.0
+	_battle_root = get_tree().current_scene
+	_calculate_range_circle()
+
+func get_damage() -> float:
+	var idx: int = mini(tower_level - 1, tower_data.damage.size() - 1)
+	return tower_data.damage[idx]
+
+func get_attack_interval() -> float:
+	var idx: int = mini(tower_level - 1, tower_data.attack_interval.size() - 1)
+	return tower_data.attack_interval[idx]
+
+func get_attack_range() -> float:
+	var idx: int = mini(tower_level - 1, tower_data.attack_range.size() - 1)
+	return tower_data.attack_range[idx]
+
+func get_splash_radius() -> float:
+	var idx: int = mini(tower_level - 1, tower_data.splash_radius.size() - 1)
+	return tower_data.splash_radius[idx]
+
+func get_slow_percent() -> float:
+	var idx: int = mini(tower_level - 1, tower_data.slow_percent.size() - 1)
+	return tower_data.slow_percent[idx]
+
+func get_slow_duration() -> float:
+	var idx: int = mini(tower_level - 1, tower_data.slow_duration.size() - 1)
+	return tower_data.slow_duration[idx]
+
+func get_color() -> Color:
+	var idx: int = mini(tower_level - 1, tower_data.colors.size() - 1)
+	return tower_data.colors[idx]
+
+func can_upgrade() -> bool:
+	return tower_level < 3
+
+func get_upgrade_cost() -> int:
+	if tower_level >= tower_data.upgrade_cost.size():
+		return 0
+	return tower_data.upgrade_cost[tower_level]
+
+func upgrade() -> void:
+	if not can_upgrade():
+		return
+	var cost: int = get_upgrade_cost()
+	if GameManager.spend_gold(cost):
+		tower_level += 1
+		_total_invested += cost
+		AudioManager.play_sfx("upgrade")
+		_calculate_range_circle()
+		queue_redraw()
+
+func sell() -> void:
+	var sell_value: int = int(_total_invested * GameManager.config.tower_sell_return_rate)
+	GameManager.add_gold(sell_value)
+	AudioManager.play_sfx("sell")
+	queue_free()
+
+func show_range(show: bool) -> void:
+	_show_range = show
+	queue_redraw()
+
+func _calculate_range_circle() -> void:
+	_range_circle_points.clear()
+	var segments: int = 48
+	var r: float = get_attack_range()
+	for i in range(segments + 1):
+		var angle: float = TAU * float(i) / float(segments)
+		_range_circle_points.append(Vector2(cos(angle), sin(angle)) * r)
+
+func _process(delta: float) -> void:
+	if not GameManager.is_battle_active:
+		return
+	
+	_attack_timer -= delta
+	if _attack_timer <= 0:
+		_find_target()
+		if _target and is_instance_valid(_target):
+			_shoot()
+			_attack_timer = get_attack_interval()
+		else:
+			_attack_timer = 0.1
+
+func _find_target() -> void:
+	_target = null
+	var spawner: Node = _find_spawner()
+	if not spawner:
+		return
+	var monsters: Array = spawner.get_all_monsters()
+	var best_progress: float = -1.0
+	var range: float = get_attack_range()
+	
+	for monster in monsters:
+		if not is_instance_valid(monster) or monster.is_dead:
+			continue
+		var dist: float = global_position.distance_to(monster.global_position)
+		if dist <= range:
+			if monster.progress_ratio > best_progress:
+				best_progress = monster.progress_ratio
+				_target = monster
+
+func _find_spawner() -> Node:
+	if _battle_root and is_instance_valid(_battle_root):
+		return _battle_root.get_node_or_null("MonsterSpawner")
+	return null
+
+func _shoot() -> void:
+	if not _target or not is_instance_valid(_target):
+		return
+	
+	var projectile_script: GDScript = load("res://scripts/towers/projectile.gd")
+	var projectile: CharacterBody2D = CharacterBody2D.new()
+	projectile.set_script(projectile_script)
+	projectile.setup(
+		global_position,
+		_target,
+		get_damage(),
+		tower_data.projectile_speed,
+		tower_type,
+		get_splash_radius(),
+		get_slow_percent(),
+		get_slow_duration()
+	)
+	var battle: Node = _battle_root if (_battle_root and is_instance_valid(_battle_root)) else get_tree().current_scene
+	battle.add_child(projectile)
+	
+	AudioManager.play_sfx("attack_" + tower_type)
+
+func _draw() -> void:
+	var color: Color = get_color()
+	var base_size: float = 20.0
+	
+	draw_rect(Rect2(-base_size, -base_size * 1.5, base_size * 2, base_size * 1.5), color)
+	
+	var roof_color: Color = Color(color.r * 0.7, color.g * 0.7, color.b * 0.7)
+	var roof_points: PackedVector2Array = PackedVector2Array(
+		Vector2(-base_size - 5, -base_size * 1.5),
+		Vector2(0, -base_size * 2.5),
+		Vector2(base_size + 5, -base_size * 1.5)
+	)
+	draw_colored_polygon(roof_points, roof_color)
+	
+	draw_rect(Rect2(-base_size * 0.3, -base_size * 0.5, base_size * 0.6, base_size * 0.5), Color(0.2, 0.2, 0.2))
+	
+	if tower_type == "cannon":
+		draw_circle(Vector2(0, -base_size * 0.8), 6, Color.DARK_GRAY)
+	elif tower_type == "ice":
+		draw_circle(Vector2(0, -base_size * 0.8), 5, Color.LIGHT_BLUE)
+	
+	for i in range(1, mini(tower_level, 3)):
+		draw_string(ThemeDB.fallback_font, Vector2(-3, -base_size * 2.6 - i * 2), "★", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color.YELLOW)
+	
+	if _show_range:
+		draw_colored_polygon(_range_circle_points, Color(1, 1, 1, 0.1))
+		draw_polyline(_range_circle_points, Color(1, 1, 1, 0.3), 1.0)
+
+func is_click_in_area(click_pos: Vector2) -> bool:
+	var local_pos: Vector2 = to_local(click_pos)
+	return abs(local_pos.x) <= 25 and local_pos.y >= -55 and local_pos.y <= 10

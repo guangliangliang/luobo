@@ -1,0 +1,58 @@
+[gd_resource type="Resource" script_class="LevelData" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/level_data.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/resources/wave_data.gd" id="2_script"]
+
+[sub_resource type="Resource" id="WaveData_wave1"]
+script = ExtResource("2_script")
+monster_type = "goblin"
+count = 10
+spawn_interval = 0.8
+path_index = 0
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave2"]
+script = ExtResource("2_script")
+monster_type = "goblin"
+count = 15
+spawn_interval = 0.7
+path_index = 0
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave3"]
+script = ExtResource("2_script")
+monster_type = "goblin"
+count = 20
+spawn_interval = 0.6
+path_index = 0
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave4"]
+script = ExtResource("2_script")
+monster_type = "goblin"
+count = 25
+spawn_interval = 0.5
+path_index = 0
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave5"]
+script = ExtResource("2_script")
+monster_type = "boss"
+count = 1
+spawn_interval = 2.0
+path_index = 0
+is_boss = true
+
+[resource]
+script = ExtResource("1_script")
+level_name = "村口防线"
+level_id = 1
+starting_gold = 300
+village_health = 20
+village_position = Vector2(960, 820)
+path_points = [PackedVector2Array(100, 60, 100, 360, 500, 360, 500, 560, 100, 560, 100, 820, 960, 820)]
+build_spots = PackedVector2Array(Vector2(200, 200), Vector2(200, 460), Vector2(300, 280), Vector2(300, 460), Vector2(580, 280), Vector2(580, 460), Vector2(580, 640), Vector2(200, 640), Vector2(400, 640), Vector2(400, 200))
+waves = [SubResource("WaveData_wave1"), SubResource("WaveData_wave2"), SubResource("WaveData_wave3"), SubResource("WaveData_wave4"), SubResource("WaveData_wave5")]
+bg_color = Color(0.18, 0.32, 0.12, 1)
+path_color = Color(0.55, 0.4, 0.25, 1)
+path_width = 50.0
