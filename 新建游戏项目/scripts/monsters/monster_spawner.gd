@@ -93,15 +93,11 @@ func _spawn_monster(monster_type: String, path_index: int) -> void:
 	path.curve = _path_curves[path_index]
 	add_child(path)
 	
-	var follow: PathFollow2D = PathFollow2D.new()
-	follow.rotates = false
-	follow.loop = false
+	var scene: PackedScene = load("res://scenes/Monster.tscn")
+	var follow: PathFollow2D = scene.instantiate()
 	path.add_child(follow)
 	
-	var script: GDScript = load("res://scripts/monsters/monster_base.gd")
-	follow.set_script(script)
 	follow.setup(monster_data, _level_data.path_points[path_index])
-	follow.queue_redraw()
 	
 	_active_monsters.append(follow)
 	follow.tree_exiting.connect(_on_monster_removed.bind(follow, path))

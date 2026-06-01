@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/monster_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+monster_name = "大熊"
+monster_type = "bear"
+max_health = 500
+move_speed = 50.0
+reward = 400
+body_color = Color(0.4, 0.2, 0.1, 1)
+body_radius = 24.0

@@ -11,6 +11,7 @@ var _range_circle_points: PackedVector2Array = []
 var _show_range: bool = false
 var _total_invested: int = 0
 var _battle_root: Node = null
+var _sprite: Sprite2D = null
 
 func setup(type: String, data: TowerData) -> void:
 	tower_type = type
@@ -18,6 +19,7 @@ func setup(type: String, data: TowerData) -> void:
 	_total_invested = data.cost
 	_attack_timer = 0.0
 	_battle_root = get_tree().current_scene
+	_setup_sprite()
 	_calculate_range_circle()
 	set_process(true)
 	queue_redraw()
@@ -66,6 +68,7 @@ func upgrade() -> void:
 		tower_level += 1
 		_total_invested += cost
 		AudioManager.play_sfx("upgrade")
+		_update_sprite_texture()
 		_calculate_range_circle()
 		queue_redraw()
 
@@ -146,6 +149,13 @@ func _shoot() -> void:
 	AudioManager.play_sfx("attack_" + tower_type)
 
 func _draw() -> void:
+	if _show_range:
+		draw_colored_polygon(_range_circle_points, Color(1, 1, 1, 0.1))
+		draw_polyline(_range_circle_points, Color(1, 1, 1, 0.3), 1.0)
+	
+	if _sprite and _sprite.visible:
+		return
+	
 	var color: Color = get_color()
 	var base_size: float = 20.0
 	
@@ -169,9 +179,54 @@ func _draw() -> void:
 	for i in range(1, mini(tower_level, 3)):
 		draw_string(ThemeDB.fallback_font, Vector2(-3, -base_size * 2.6 - i * 2), "★", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color.YELLOW)
 	
-	if _show_range:
-		draw_colored_polygon(_range_circle_points, Color(1, 1, 1, 0.1))
-		draw_polyline(_range_circle_points, Color(1, 1, 1, 0.3), 1.0)
+func _setup_sprite() -> void:
+	_sprite = Sprite2D.new()
+	_sprite.name = "TowerSprite"
+	_sprite.centered = false
+	add_child(_sprite)
+	_update_sprite_texture()
+
+func _update_sprite_texture() -> void:
+	if not _sprite:
+		return
+	
+	var texture_path: String = _get_tower_texture_path()
+	if texture_path.is_empty() or not FileAccess.file_exists(texture_path):
+		_sprite.visible = false
+		return
+	
+	var image: Image = Image.load_from_file(texture_path)
+	if not image:
+		_sprite.visible = false
+		return
+	
+	var texture: ImageTexture = ImageTexture.create_from_image(image)
+	var target_height: float = _get_tower_target_height()
+	var scale_factor: float = target_height / float(texture.get_height())
+	_sprite.texture = texture
+	_sprite.scale = Vector2.ONE * scale_factor
+	_sprite.position = Vector2(-texture.get_width() * scale_factor * 0.5, -texture.get_height() * scale_factor + 8.0)
+	_sprite.visible = true
+
+func _get_tower_texture_path() -> String:
+	match tower_type:
+		"arrow":
+			return "res://assets/towers/tower_lv%d_transparent.png" % tower_level
+		"cannon":
+			return "res://assets/towers/cannon_tower_lv%d_transparent.png" % tower_level
+		"ice":
+			return "res://assets/towers/ice_tower_lv%d.png_transparent.png" % tower_level
+		_:
+			return ""
+
+func _get_tower_target_height() -> float:
+	match tower_type:
+		"cannon":
+			return 52.0
+		"ice":
+			return 56.0
+		_:
+			return 58.0
 
 func is_click_in_area(click_pos: Vector2) -> bool:
 	var local_pos: Vector2 = to_local(click_pos)

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/monster_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+monster_name = "野狼"
+monster_type = "wolf"
+max_health = 30
+move_speed = 80.0
+reward = 50
+body_color = Color(0.5, 0.5, 0.5, 1)
+body_radius = 12.0

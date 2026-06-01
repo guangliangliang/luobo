@@ -1,43 +1,51 @@
-[gd_resource type="Resource" script_class="LevelData" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="LevelData" load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/level_data.gd" id="1_script"]
 [ext_resource type="Script" path="res://scripts/resources/wave_data.gd" id="2_script"]
 
 [sub_resource type="Resource" id="WaveData_wave1"]
 script = ExtResource("2_script")
-monster_type = "goblin"
-count = 8
-spawn_interval = 0.8
+monster_type = "wolf"
+count = 14
+spawn_interval = 0.65
 path_index = -1
 is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave2"]
 script = ExtResource("2_script")
-monster_type = "goblin"
-count = 10
-spawn_interval = 0.7
+monster_type = "bandit"
+count = 6
+spawn_interval = 0.9
 path_index = -1
 is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave3"]
 script = ExtResource("2_script")
-monster_type = "goblin"
-count = 12
-spawn_interval = 0.6
+monster_type = "wolf"
+count = 18
+spawn_interval = 0.55
 path_index = -1
 is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave4"]
 script = ExtResource("2_script")
-monster_type = "berserker_goblin"
-count = 5
-spawn_interval = 0.9
+monster_type = "bandit"
+count = 10
+spawn_interval = 0.7
 path_index = -1
 is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave5"]
 script = ExtResource("2_script")
-monster_type = "boss"
+monster_type = "wolf"
+count = 24
+spawn_interval = 0.45
+path_index = -1
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave6"]
+script = ExtResource("2_script")
+monster_type = "bear"
 count = 1
 spawn_interval = 2.0
 path_index = -1
@@ -47,12 +55,12 @@ is_boss = true
 script = ExtResource("1_script")
 level_name = "分兵两路"
 level_id = 2
-starting_gold = 600
-village_health = 20
+starting_gold = 500
+village_health = 18
 village_position = Vector2(1200, 360)
 path_points = [PackedVector2Array(40, 360, 200, 360, 200, 160, 900, 160, 900, 360, 1240, 360), PackedVector2Array(40, 360, 200, 360, 200, 560, 900, 560, 900, 360, 1240, 360)]
 build_spots = PackedVector2Array(120, 240, 120, 480, 400, 70, 600, 70, 400, 260, 600, 260, 400, 470, 600, 470, 400, 650, 600, 650, 1050, 240, 1050, 480)
-waves = [SubResource("WaveData_wave1"), SubResource("WaveData_wave2"), SubResource("WaveData_wave3"), SubResource("WaveData_wave4"), SubResource("WaveData_wave5")]
+waves = [SubResource("WaveData_wave1"), SubResource("WaveData_wave2"), SubResource("WaveData_wave3"), SubResource("WaveData_wave4"), SubResource("WaveData_wave5"), SubResource("WaveData_wave6")]
 bg_color = Color(0.15, 0.28, 0.1, 1)
 path_color = Color(0.5, 0.38, 0.22, 1)
 path_width = 35.0

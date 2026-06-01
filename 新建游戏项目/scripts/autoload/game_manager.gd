@@ -27,9 +27,9 @@ func _load_configs() -> void:
 	_load_tower_data("arrow", "res://resources/towers/arrow_tower.tres")
 	_load_tower_data("cannon", "res://resources/towers/cannon_tower.tres")
 	_load_tower_data("ice", "res://resources/towers/ice_tower.tres")
-	_load_monster_data("goblin", "res://resources/monsters/goblin.tres")
-	_load_monster_data("berserker_goblin", "res://resources/monsters/berserker_goblin.tres")
-	_load_monster_data("boss", "res://resources/monsters/boss.tres")
+	_load_monster_data("wolf", "res://resources/monsters/wolf.tres")
+	_load_monster_data("bandit", "res://resources/monsters/bandit.tres")
+	_load_monster_data("bear", "res://resources/monsters/bear.tres")
 	_load_level_data(1, "res://resources/levels/level_01.tres")
 	_load_level_data(2, "res://resources/levels/level_02.tres")
 
