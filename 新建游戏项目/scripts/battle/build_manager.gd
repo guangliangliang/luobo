@@ -58,8 +58,8 @@ func build_tower(spot_index: int, tower_type: String) -> Node2D:
 	var tower: Node2D = Node2D.new()
 	tower.set_script(tower_script)
 	tower.global_position = _build_spots[spot_index].position
-	tower.setup(tower_type, td)
 	add_child(tower)
+	tower.setup(tower_type, td)
 	
 	occupy_spot(spot_index, tower)
 	AudioManager.play_sfx("build")

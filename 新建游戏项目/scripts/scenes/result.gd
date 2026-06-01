@@ -31,13 +31,13 @@ func _setup_ui() -> void:
 	
 	var title: Label = Label.new()
 	title.name = "ResultTitle"
-	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_font_size_override("font_size", 52)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	center.add_child(title)
 	
 	var stats: Label = Label.new()
 	stats.name = "StatsLabel"
-	stats.add_theme_font_size_override("font_size", 22)
+	stats.add_theme_font_size_override("font_size", 24)
 	stats.add_theme_color_override("font_color", Color.LIGHT_GRAY)
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	center.add_child(stats)
@@ -53,23 +53,23 @@ func _setup_ui() -> void:
 	
 	var restart_btn: Button = Button.new()
 	restart_btn.text = "重新开始"
-	restart_btn.custom_minimum_size = Vector2(140, 50)
-	restart_btn.add_theme_font_size_override("font_size", 20)
+	restart_btn.custom_minimum_size = Vector2(160, 55)
+	restart_btn.add_theme_font_size_override("font_size", 22)
 	restart_btn.pressed.connect(_on_restart)
 	btn_hbox.add_child(restart_btn)
 	
 	var menu_btn: Button = Button.new()
 	menu_btn.text = "返回菜单"
-	menu_btn.custom_minimum_size = Vector2(140, 50)
-	menu_btn.add_theme_font_size_override("font_size", 20)
+	menu_btn.custom_minimum_size = Vector2(160, 55)
+	menu_btn.add_theme_font_size_override("font_size", 22)
 	menu_btn.pressed.connect(_on_menu)
 	btn_hbox.add_child(menu_btn)
 	
 	var next_btn: Button = Button.new()
 	next_btn.name = "NextBtn"
 	next_btn.text = "下一关"
-	next_btn.custom_minimum_size = Vector2(140, 50)
-	next_btn.add_theme_font_size_override("font_size", 20)
+	next_btn.custom_minimum_size = Vector2(160, 55)
+	next_btn.add_theme_font_size_override("font_size", 22)
 	next_btn.pressed.connect(_on_next)
 	btn_hbox.add_child(next_btn)
 

@@ -6,8 +6,8 @@
 script = ExtResource("1")
 monster_name = "狂暴哥布林"
 monster_type = "berserker_goblin"
-max_health = 150
+max_health = 50
 move_speed = 150.0
-reward = 20
+reward = 80
 body_color = Color(0.9, 0.2, 0.1, 1)
 body_radius = 14.0

@@ -19,6 +19,8 @@ func setup(type: String, data: TowerData) -> void:
 	_attack_timer = 0.0
 	_battle_root = get_tree().current_scene
 	_calculate_range_circle()
+	set_process(true)
+	queue_redraw()
 
 func get_damage() -> float:
 	var idx: int = mini(tower_level - 1, tower_data.damage.size() - 1)
@@ -150,11 +152,11 @@ func _draw() -> void:
 	draw_rect(Rect2(-base_size, -base_size * 1.5, base_size * 2, base_size * 1.5), color)
 	
 	var roof_color: Color = Color(color.r * 0.7, color.g * 0.7, color.b * 0.7)
-	var roof_points: PackedVector2Array = PackedVector2Array(
+	var roof_points: PackedVector2Array = [
 		Vector2(-base_size - 5, -base_size * 1.5),
 		Vector2(0, -base_size * 2.5),
 		Vector2(base_size + 5, -base_size * 1.5)
-	)
+	]
 	draw_colored_polygon(roof_points, roof_color)
 	
 	draw_rect(Rect2(-base_size * 0.3, -base_size * 0.5, base_size * 0.6, base_size * 0.5), Color(0.2, 0.2, 0.2))

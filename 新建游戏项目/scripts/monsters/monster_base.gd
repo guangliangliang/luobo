@@ -19,6 +19,8 @@ func setup(monster_data: MonsterData, _path_points: PackedVector2Array) -> void:
 	base_speed = data.move_speed
 	current_speed = base_speed
 	progress_ratio = 0.0
+	set_process(true)
+	queue_redraw()
 
 func take_damage(amount: float) -> void:
 	if is_dead:

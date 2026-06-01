@@ -17,8 +17,8 @@ func _ready() -> void:
 	_level_data = GameManager.get_level_data(GameManager.current_level_id)
 	if not _level_data:
 		return
-	GameManager.start_battle(GameManager.current_level_id)
 	_create_battle_scene()
+	GameManager.start_battle(GameManager.current_level_id)
 
 func _create_battle_scene() -> void:
 	_create_map()
@@ -40,7 +40,7 @@ func _create_map() -> void:
 func _draw_background() -> void:
 	var bg: ColorRect = ColorRect.new()
 	bg.color = _level_data.bg_color
-	bg.size = Vector2(1920, 1080)
+	bg.size = Vector2(1280, 720)
 	bg.z_index = -10
 	_map_drawer.add_child(bg)
 
@@ -184,6 +184,7 @@ func _create_ui() -> void:
 
 func _connect_signals() -> void:
 	_hud.start_wave_pressed.connect(_on_start_wave)
+	_hud.back_pressed.connect(_on_back_pressed)
 	_build_menu.tower_selected.connect(_on_build_tower)
 	_build_menu.cancel_pressed.connect(_on_cancel_build)
 	_tower_menu.upgrade_pressed.connect(_on_upgrade_tower)
@@ -192,6 +193,10 @@ func _connect_signals() -> void:
 	_wave_mgr.wave_started.connect(_on_wave_started)
 	_wave_mgr.wave_completed.connect(_on_wave_completed)
 	GameManager.gold_changed.connect(_on_gold_changed)
+
+func _on_back_pressed() -> void:
+	GameManager.is_battle_active = false
+	get_tree().change_scene_to_file("res://scenes/LevelSelect.tscn")
 
 func _on_start_wave() -> void:
 	if _wave_mgr.can_start_wave():
@@ -203,6 +208,13 @@ func _on_wave_started(wave_index: int) -> void:
 
 func _on_wave_completed(_wave_index: int) -> void:
 	_update_hud()
+	if _wave_mgr.can_start_wave():
+		get_tree().create_timer(3.0).timeout.connect(_auto_start_next_wave)
+
+func _auto_start_next_wave() -> void:
+	if _wave_mgr.can_start_wave():
+		_wave_mgr.start_next_wave()
+		_spawner.start_wave(_wave_mgr._current_wave)
 
 func _on_build_tower(tower_type: String) -> void:
 	if _selected_spot >= 0:
@@ -242,13 +254,13 @@ func _on_cancel_tower_menu() -> void:
 	_tower_menu.hide_menu()
 
 func _on_gold_changed(_new_gold: int) -> void:
-	if _tower_menu.visible:
+	if _tower_menu and _tower_menu.visible:
 		_tower_menu._update_info()
-	if _build_menu.visible:
+	if _build_menu and _build_menu.visible:
 		_build_menu._update_button_states()
 
 func _update_hud() -> void:
-	if _hud:
+	if _hud and _wave_mgr and _spawner:
 		_hud.update_gold(GameManager.current_gold)
 		_hud.update_health(GameManager.village_health)
 		_hud.update_wave(_wave_mgr.get_current_wave(), _wave_mgr.get_total_waves())
@@ -256,35 +268,40 @@ func _update_hud() -> void:
 		_hud.update_start_button(_wave_mgr.can_start_wave(), _wave_mgr.is_all_done())
 
 func _input(event: InputEvent) -> void:
+	var click_pos: Vector2 = Vector2.ZERO
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var click_pos: Vector2 = (event as InputEventMouseButton).position
-		
-		if _build_menu.visible:
-			var menu_rect: Rect2 = _build_menu.get_global_rect()
-			if menu_rect.has_point(click_pos):
-				return
-			_build_menu.hide_menu()
-			_selected_spot = -1
-		
-		if _tower_menu.visible:
-			var tower_rect: Rect2 = _tower_menu.get_global_rect()
-			if tower_rect.has_point(click_pos):
-				return
+		click_pos = (event as InputEventMouseButton).position
+	elif event is InputEventScreenTouch and event.pressed:
+		click_pos = (event as InputEventScreenTouch).position
+	else:
+		return
+	
+	if _build_menu and _build_menu.visible:
+		var menu_rect: Rect2 = _build_menu.get_global_rect()
+		if menu_rect.has_point(click_pos):
+			return
+		_build_menu.hide_menu()
+		_selected_spot = -1
+	
+	if _tower_menu and _tower_menu.visible:
+		var tower_rect: Rect2 = _tower_menu.get_global_rect()
+		if tower_rect.has_point(click_pos):
+			return
+		_hide_tower_range()
+		_tower_menu.hide_menu()
+	
+	for tower: Node2D in _build_mgr._built_towers.values():
+		if is_instance_valid(tower) and tower.is_click_in_area(click_pos):
 			_hide_tower_range()
-			_tower_menu.hide_menu()
-		
-		for tower: Node2D in _build_mgr._built_towers.values():
-			if is_instance_valid(tower) and tower.is_click_in_area(click_pos):
-				_hide_tower_range()
-				_selected_tower = tower
-				tower.show_range(true)
-				_tower_menu.show_for_tower(tower, click_pos)
-				return
-		
-		var spot_idx: int = _build_mgr.get_spot_index_at_position(click_pos)
-		if spot_idx >= 0 and not _build_mgr.is_spot_occupied(spot_idx):
-			_selected_spot = spot_idx
-			_build_menu.show_at(click_pos)
+			_selected_tower = tower
+			tower.show_range(true)
+			_tower_menu.show_for_tower(tower, click_pos)
+			return
+	
+	var spot_idx: int = _build_mgr.get_spot_index_at_position(click_pos)
+	if spot_idx >= 0 and not _build_mgr.is_spot_occupied(spot_idx):
+		_selected_spot = spot_idx
+		_build_menu.show_at(click_pos)
 
 func _hide_tower_range() -> void:
 	if _selected_tower and is_instance_valid(_selected_tower):

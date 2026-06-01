@@ -13,16 +13,16 @@ func _setup_ui() -> void:
 	
 	var center: VBoxContainer = VBoxContainer.new()
 	center.set_anchors_preset(Control.PRESET_CENTER)
-	center.offset_left = -150
-	center.offset_top = -120
-	center.offset_right = 150
-	center.offset_bottom = 120
+	center.offset_left = -160
+	center.offset_top = -130
+	center.offset_right = 160
+	center.offset_bottom = 130
 	center.add_theme_constant_override("separation", 25)
 	add_child(center)
 	
 	var title: Label = Label.new()
 	title.text = "守卫村庄"
-	title.add_theme_font_size_override("font_size", 56)
+	title.add_theme_font_size_override("font_size", 60)
 	title.add_theme_color_override("font_color", Color(0.9, 0.8, 0.3))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	center.add_child(title)
@@ -40,15 +40,15 @@ func _setup_ui() -> void:
 	
 	var start_btn: Button = Button.new()
 	start_btn.text = "开始游戏"
-	start_btn.custom_minimum_size = Vector2(200, 55)
-	start_btn.add_theme_font_size_override("font_size", 24)
+	start_btn.custom_minimum_size = Vector2(240, 60)
+	start_btn.add_theme_font_size_override("font_size", 26)
 	start_btn.pressed.connect(_on_start_pressed)
 	center.add_child(start_btn)
 	
 	var exit_btn: Button = Button.new()
 	exit_btn.text = "退出游戏"
-	exit_btn.custom_minimum_size = Vector2(200, 55)
-	exit_btn.add_theme_font_size_override("font_size", 24)
+	exit_btn.custom_minimum_size = Vector2(240, 60)
+	exit_btn.add_theme_font_size_override("font_size", 26)
 	exit_btn.pressed.connect(_on_exit_pressed)
 	center.add_child(exit_btn)
 

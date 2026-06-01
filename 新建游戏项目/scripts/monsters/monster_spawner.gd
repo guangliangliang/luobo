@@ -6,7 +6,7 @@ signal wave_complete
 var _spawn_queue: Array[Dictionary] = []
 var _spawn_timer: float = 0.0
 var _is_spawning: bool = false
-var _active_monsters: Array[CharacterBody2D] = []
+var _active_monsters: Array[PathFollow2D] = []
 var _current_wave_index: int = -1
 var _path_curves: Array = []
 var _level_data: LevelData
@@ -14,6 +14,7 @@ var _level_data: LevelData
 func setup(level_data: LevelData) -> void:
 	_level_data = level_data
 	_build_path_curves()
+	set_process(true)
 
 func _build_path_curves() -> void:
 	_path_curves.clear()
@@ -30,6 +31,7 @@ func start_wave(wave_index: int) -> void:
 	var wave: WaveData = _level_data.waves[wave_index]
 	_is_spawning = true
 	_spawn_queue.clear()
+	set_process(true)
 	
 	var path_indices: Array[int] = []
 	if wave.path_index < 0 or wave.path_index >= _path_curves.size():
@@ -93,11 +95,13 @@ func _spawn_monster(monster_type: String, path_index: int) -> void:
 	
 	var follow: PathFollow2D = PathFollow2D.new()
 	follow.rotates = false
+	follow.loop = false
 	path.add_child(follow)
 	
 	var script: GDScript = load("res://scripts/monsters/monster_base.gd")
 	follow.set_script(script)
 	follow.setup(monster_data, _level_data.path_points[path_index])
+	follow.queue_redraw()
 	
 	_active_monsters.append(follow)
 	follow.tree_exiting.connect(_on_monster_removed.bind(follow, path))

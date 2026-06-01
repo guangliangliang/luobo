@@ -18,38 +18,38 @@ func _setup_ui() -> void:
 	visible = false
 	
 	var panel: PanelContainer = PanelContainer.new()
-	panel.custom_minimum_size = Vector2(220, 260)
+	panel.custom_minimum_size = Vector2(250, 300)
 	add_child(panel)
 	
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.offset_top = 10
 	vbox.offset_left = 10
-	vbox.offset_right = 210
-	vbox.add_theme_constant_override("separation", 8)
+	vbox.offset_right = 240
+	vbox.add_theme_constant_override("separation", 10)
 	panel.add_child(vbox)
 	
 	_info_label = Label.new()
-	_info_label.add_theme_font_size_override("font_size", 15)
+	_info_label.add_theme_font_size_override("font_size", 18)
 	_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_info_label.custom_minimum_size = Vector2(190, 100)
+	_info_label.custom_minimum_size = Vector2(220, 110)
 	vbox.add_child(_info_label)
 	
 	_upgrade_btn = Button.new()
-	_upgrade_btn.custom_minimum_size = Vector2(190, 40)
-	_upgrade_btn.add_theme_font_size_override("font_size", 16)
+	_upgrade_btn.custom_minimum_size = Vector2(220, 50)
+	_upgrade_btn.add_theme_font_size_override("font_size", 20)
 	_upgrade_btn.pressed.connect(func(): upgrade_pressed.emit())
 	vbox.add_child(_upgrade_btn)
 	
 	_sell_btn = Button.new()
-	_sell_btn.custom_minimum_size = Vector2(190, 40)
-	_sell_btn.add_theme_font_size_override("font_size", 16)
+	_sell_btn.custom_minimum_size = Vector2(220, 50)
+	_sell_btn.add_theme_font_size_override("font_size", 20)
 	_sell_btn.pressed.connect(func(): sell_pressed.emit())
 	vbox.add_child(_sell_btn)
 	
 	var cancel_btn: Button = Button.new()
 	cancel_btn.text = "取消"
-	cancel_btn.custom_minimum_size = Vector2(190, 35)
-	cancel_btn.add_theme_font_size_override("font_size", 16)
+	cancel_btn.custom_minimum_size = Vector2(220, 45)
+	cancel_btn.add_theme_font_size_override("font_size", 20)
 	cancel_btn.pressed.connect(func(): cancel_pressed.emit())
 	vbox.add_child(cancel_btn)
 
@@ -59,10 +59,10 @@ func show_for_tower(tower: Node2D, pos: Vector2) -> void:
 	
 	position = pos
 	var screen_size: Vector2 = get_viewport_rect().size
-	if position.x + 220 > screen_size.x:
-		position.x = screen_size.x - 230
-	if position.y + 260 > screen_size.y:
-		position.y = screen_size.y - 270
+	if position.x + 250 > screen_size.x:
+		position.x = screen_size.x - 260
+	if position.y + 300 > screen_size.y:
+		position.y = screen_size.y - 310
 	
 	visible = true
 

@@ -2,7 +2,7 @@ extends Node
 
 const SAVE_PATH: String = "user://save_data.json"
 
-var unlock_level: int = 1
+var unlock_level: int = 99
 var best_score: int = 0
 
 func _ready() -> void:
