@@ -3,6 +3,8 @@ extends Node2D
 signal all_monsters_spawned
 signal wave_complete
 
+const MONSTER_SCENE: PackedScene = preload("res://scenes/Monster.tscn")
+
 var _spawn_queue: Array[Dictionary] = []
 var _spawn_timer: float = 0.0
 var _is_spawning: bool = false
@@ -93,8 +95,7 @@ func _spawn_monster(monster_type: String, path_index: int) -> void:
 	path.curve = _path_curves[path_index]
 	add_child(path)
 	
-	var scene: PackedScene = load("res://scenes/Monster.tscn")
-	var follow: PathFollow2D = scene.instantiate()
+	var follow: PathFollow2D = MONSTER_SCENE.instantiate()
 	path.add_child(follow)
 	
 	follow.setup(monster_data, _level_data.path_points[path_index])

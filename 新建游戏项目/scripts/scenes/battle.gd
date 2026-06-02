@@ -23,6 +23,7 @@ var _game_started: bool = false
 var _level_info_dialog: Control
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_level_data = GameManager.get_level_data(GameManager.current_level_id)
 	if not _level_data:
 		return
@@ -120,6 +121,7 @@ func _create_managers() -> void:
 	var spawner_script: GDScript = load("res://scripts/monsters/monster_spawner.gd")
 	_spawner = Node2D.new()
 	_spawner.name = "MonsterSpawner"
+	_spawner.process_mode = Node.PROCESS_MODE_PAUSABLE
 	_spawner.set_script(spawner_script)
 	_spawner.setup(_level_data)
 	add_child(_spawner)
@@ -127,6 +129,7 @@ func _create_managers() -> void:
 	var wave_script: GDScript = load("res://scripts/battle/wave_manager.gd")
 	_wave_mgr = Node2D.new()
 	_wave_mgr.name = "WaveManager"
+	_wave_mgr.process_mode = Node.PROCESS_MODE_PAUSABLE
 	_wave_mgr.set_script(wave_script)
 	_wave_mgr.setup(_level_data)
 	add_child(_wave_mgr)
@@ -134,6 +137,7 @@ func _create_managers() -> void:
 	var build_script: GDScript = load("res://scripts/battle/build_manager.gd")
 	_build_mgr = Node2D.new()
 	_build_mgr.name = "BuildManager"
+	_build_mgr.process_mode = Node.PROCESS_MODE_PAUSABLE
 	_build_mgr.set_script(build_script)
 	_build_mgr.setup(_level_data)
 	add_child(_build_mgr)
@@ -141,6 +145,7 @@ func _create_managers() -> void:
 	var battle_script: GDScript = load("res://scripts/battle/battle_manager.gd")
 	_battle_mgr = Node2D.new()
 	_battle_mgr.name = "BattleManager"
+	_battle_mgr.process_mode = Node.PROCESS_MODE_PAUSABLE
 	_battle_mgr.set_script(battle_script)
 	_battle_mgr.setup(_level_data, _spawner, _wave_mgr, _build_mgr)
 	add_child(_battle_mgr)
@@ -148,6 +153,7 @@ func _create_managers() -> void:
 func _create_ui() -> void:
 	var canvas: CanvasLayer = CanvasLayer.new()
 	canvas.layer = 10
+	canvas.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(canvas)
 	
 	var hud_script: GDScript = load("res://scripts/ui/hud.gd")
@@ -179,12 +185,12 @@ func _create_ui() -> void:
 	
 	_countdown_label = Label.new()
 	_countdown_label.name = "CountdownLabel"
-	_countdown_label.custom_minimum_size = Vector2(300, 200)
+	_countdown_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_countdown_label.add_theme_font_size_override("font_size", 120)
 	_countdown_label.add_theme_color_override("font_color", Color.WHITE)
 	_countdown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_countdown_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_countdown_label.anchors_preset = Control.PRESET_CENTER
+	_countdown_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_countdown_label.z_index = 200
 	canvas.add_child(_countdown_label)
 	_countdown_label.visible = false
@@ -229,11 +235,10 @@ func _on_exit_level() -> void:
 	get_tree().change_scene_to_file("res://scenes/LevelSelect.tscn")
 
 func _on_level_info() -> void:
-	_settings_dialog.hide_dialog()
-	_level_info_dialog.visible = true
+	_level_info_dialog.show_dialog()
 
 func _on_close_level_info() -> void:
-	_level_info_dialog.visible = false
+	_level_info_dialog.hide_dialog()
 
 func _on_restart_level() -> void:
 	_settings_dialog.hide_dialog()
@@ -260,6 +265,7 @@ func _start_countdown() -> void:
 	_countdown_label.text = str(_countdown_count)
 	
 	_countdown_timer = Timer.new()
+	_countdown_timer.process_mode = Node.PROCESS_MODE_PAUSABLE
 	_countdown_timer.wait_time = 1.0
 	_countdown_timer.autostart = true
 	_countdown_timer.one_shot = false
@@ -356,7 +362,7 @@ func _input(event: InputEvent) -> void:
 		click_pos = (event as InputEventScreenTouch).position
 	else:
 		return
-	
+
 	if _build_menu and _build_menu.visible:
 		var menu_rect: Rect2 = _build_menu.get_global_rect()
 		if menu_rect.has_point(click_pos):
@@ -380,9 +386,17 @@ func _input(event: InputEvent) -> void:
 			return
 	
 	var spot_idx: int = _build_mgr.get_spot_index_at_position(click_pos)
-	if spot_idx >= 0 and not _build_mgr.is_spot_occupied(spot_idx):
-		_selected_spot = spot_idx
-		_build_menu.show_at(click_pos)
+	if spot_idx >= 0:
+		if _build_mgr.is_spot_occupied(spot_idx):
+			var spot_tower: Node2D = _build_mgr.get_tower_at_spot(spot_idx)
+			if spot_tower and is_instance_valid(spot_tower):
+				_hide_tower_range()
+				_selected_tower = spot_tower
+				spot_tower.show_range(true)
+				_tower_menu.show_for_tower(spot_tower, click_pos)
+		else:
+			_selected_spot = spot_idx
+			_build_menu.show_at(click_pos)
 
 func _hide_tower_range() -> void:
 	if _selected_tower and is_instance_valid(_selected_tower):
@@ -390,6 +404,9 @@ func _hide_tower_range() -> void:
 	_selected_tower = null
 
 func _process(_delta: float) -> void:
+	if _is_paused:
+		return
+
 	if _spawner and _hud:
 		_hud.update_monster_count(_spawner.get_active_count())
 	

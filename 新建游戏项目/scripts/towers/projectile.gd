@@ -17,6 +17,8 @@ const HIT_EFFECT_TEXTURES: Dictionary = {
 	"ice": preload("res://assets/effects/新建文件夹/freeze_hit_sheet.png"),
 }
 
+static var _hit_effect_frames_cache: Dictionary = {}
+
 var _start_pos: Vector2
 var _target: Node2D
 var _damage: float
@@ -59,7 +61,6 @@ func _physics_process(_delta: float) -> void:
 		return
 	
 	move_and_slide()
-	queue_redraw()
 
 func _find_spawner() -> Node:
 	var root: Node = get_tree().current_scene
@@ -142,7 +143,7 @@ func _spawn_hit_effect() -> void:
 	if not HIT_EFFECT_TEXTURES.has(_tower_type):
 		return
 	var effect: AnimatedSprite2D = AnimatedSprite2D.new()
-	effect.sprite_frames = _create_effect_frames(HIT_EFFECT_TEXTURES[_tower_type])
+	effect.sprite_frames = _get_effect_frames(_tower_type)
 	effect.animation = "hit"
 	effect.global_position = _target.global_position if (_target and is_instance_valid(_target)) else global_position
 	effect.scale = Vector2.ONE * _get_hit_effect_scale()
@@ -152,6 +153,11 @@ func _spawn_hit_effect() -> void:
 		root.add_child(effect)
 		effect.play("hit")
 		effect.animation_finished.connect(effect.queue_free)
+
+func _get_effect_frames(tower_type: String) -> SpriteFrames:
+	if not _hit_effect_frames_cache.has(tower_type):
+		_hit_effect_frames_cache[tower_type] = _create_effect_frames(HIT_EFFECT_TEXTURES[tower_type])
+	return _hit_effect_frames_cache[tower_type]
 
 func _create_effect_frames(texture: Texture2D) -> SpriteFrames:
 	var frames: SpriteFrames = SpriteFrames.new()

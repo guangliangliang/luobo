@@ -9,6 +9,9 @@ const LEVEL_CARD_NORMAL: Texture2D = preload("res://assets/ui/level_select/level
 const LEVEL_CARD_HOVER: Texture2D = preload("res://assets/ui/level_select/level_card_hover.png")
 const LEVEL_CARD_LOCKED: Texture2D = preload("res://assets/ui/level_select/level_card_locked.png")
 const BUTTON_REGION: Rect2 = Rect2(145, 350, 1245, 289)
+const LEVEL_TEXT_NORMAL: Color = Color(0.28, 0.12, 0.02)
+const LEVEL_TEXT_HOVER: Color = Color(0.18, 0.08, 0.01)
+const LEVEL_TEXT_SELECTED: Color = Color(0.72, 0.26, 0.02)
 
 var _level_buttons: Dictionary = {}
 
@@ -107,8 +110,11 @@ func _apply_level_button_style(button: Button) -> void:
 	button.add_theme_stylebox_override("pressed", _make_level_card_style(LEVEL_CARD_HOVER))
 	button.add_theme_stylebox_override("disabled", _make_level_card_style(LEVEL_CARD_LOCKED))
 	button.add_theme_font_size_override("font_size", 26)
-	button.add_theme_color_override("font_color", Color(0.28, 0.12, 0.02))
-	button.add_theme_color_override("font_hover_color", Color(0.18, 0.08, 0.01))
+	button.add_theme_color_override("font_color", LEVEL_TEXT_NORMAL)
+	button.add_theme_color_override("font_hover_color", LEVEL_TEXT_HOVER)
+	button.add_theme_color_override("font_pressed_color", LEVEL_TEXT_SELECTED)
+	button.add_theme_color_override("font_hover_pressed_color", LEVEL_TEXT_SELECTED)
+	button.add_theme_color_override("font_focus_color", LEVEL_TEXT_NORMAL)
 	button.add_theme_color_override("font_disabled_color", Color(0.25, 0.24, 0.23))
 	button.add_theme_color_override("font_outline_color", Color(1.0, 0.86, 0.48))
 	button.add_theme_color_override("font_shadow_color", Color(1.0, 0.86, 0.48, 0.9))

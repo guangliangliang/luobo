@@ -3,6 +3,8 @@ extends Node2D
 signal build_spot_clicked(spot_index: int)
 signal tower_placed(tower: Node2D, spot_index: int)
 
+const TOWER_SCRIPT: GDScript = preload("res://scripts/towers/tower_base.gd")
+
 var _build_spots: Array[Dictionary] = []
 var _level_data: LevelData
 var _built_towers: Dictionary = {}
@@ -54,9 +56,8 @@ func build_tower(spot_index: int, tower_type: String) -> Node2D:
 	if not GameManager.spend_gold(td.cost):
 		return null
 	
-	var tower_script: GDScript = load("res://scripts/towers/tower_base.gd")
 	var tower: Node2D = Node2D.new()
-	tower.set_script(tower_script)
+	tower.set_script(TOWER_SCRIPT)
 	tower.global_position = _build_spots[spot_index].position
 	add_child(tower)
 	tower.setup(tower_type, td)

@@ -1,14 +1,20 @@
 extends Node
 
 var _audio_players: Dictionary = {}
+var _sfx_streams: Dictionary = {}
 var _sfx_enabled: bool = true
 var _bgm_volume: float = 0.5
 
 func _ready() -> void:
 	_create_placeholder_streams()
+	_prewarm_sfx_streams()
 
 func _create_placeholder_streams() -> void:
 	pass
+
+func _prewarm_sfx_streams() -> void:
+	for sfx_name: String in ["build", "upgrade", "attack_arrow", "attack_cannon", "attack_ice", "victory", "defeat", "monster_die", "sell", "wave_start"]:
+		_get_sfx_stream(sfx_name)
 
 func play_sfx(name: String) -> void:
 	if not _sfx_enabled:
@@ -16,12 +22,17 @@ func play_sfx(name: String) -> void:
 	var player: AudioStreamPlayer = AudioStreamPlayer.new()
 	add_child(player)
 	
-	var stream: AudioStream = _generate_tone(name)
+	var stream: AudioStream = _get_sfx_stream(name)
 	if stream:
 		player.stream = stream
 		player.volume_db = -10.0
 		player.play()
 		player.finished.connect(player.queue_free)
+
+func _get_sfx_stream(name: String) -> AudioStream:
+	if not _sfx_streams.has(name):
+		_sfx_streams[name] = _generate_tone(name)
+	return _sfx_streams[name]
 
 func _generate_tone(name: String) -> AudioStream:
 	var sample: AudioStreamWAV = AudioStreamWAV.new()

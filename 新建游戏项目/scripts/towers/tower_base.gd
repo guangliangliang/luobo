@@ -2,6 +2,10 @@ extends Node2D
 
 signal tower_selected(tower: Node2D)
 
+const PROJECTILE_SCRIPT: GDScript = preload("res://scripts/towers/projectile.gd")
+
+static var _tower_texture_cache: Dictionary = {}
+
 var tower_data: TowerData
 var tower_level: int = 1
 var tower_type: String = ""
@@ -13,7 +17,7 @@ var _total_invested: int = 0
 var _battle_root: Node = null
 var _sprite: Sprite2D = null
 var _upgrade_icon: Node2D = null
-var _path_points: PackedVector2Array = []
+var _entrance_points: PackedVector2Array = []
 
 func setup(type: String, data: TowerData) -> void:
 	tower_type = type
@@ -23,7 +27,7 @@ func setup(type: String, data: TowerData) -> void:
 	_battle_root = get_tree().current_scene
 	_setup_sprite()
 	_setup_upgrade_icon()
-	_get_path_points()
+	_get_entrance_points()
 	_calculate_range_circle()
 	set_process(true)
 	queue_redraw()
@@ -136,11 +140,11 @@ func _shoot() -> void:
 	if not _target or not is_instance_valid(_target):
 		return
 	
-	_aim_sprite_at_target()
 	var projectile_start: Vector2 = _get_projectile_start_position()
-	var projectile_script: GDScript = load("res://scripts/towers/projectile.gd")
+	_aim_sprite_from_position(_target.global_position, projectile_start)
 	var projectile: CharacterBody2D = CharacterBody2D.new()
-	projectile.set_script(projectile_script)
+	projectile.process_mode = Node.PROCESS_MODE_PAUSABLE
+	projectile.set_script(PROJECTILE_SCRIPT)
 	projectile.setup(
 		projectile_start,
 		_target,
@@ -156,18 +160,25 @@ func _shoot() -> void:
 	
 	AudioManager.play_sfx("attack_" + tower_type)
 
-func _aim_sprite_at_target() -> void:
-	if not _sprite or tower_type != "cannon" or not _target or not is_instance_valid(_target):
+func _aim_sprite_at_position(target_position: Vector2) -> void:
+	_aim_sprite_from_position(target_position, global_position)
+
+func _aim_sprite_from_position(target_position: Vector2, from_position: Vector2) -> void:
+	if not _sprite or tower_type != "cannon":
 		return
-	var dir: Vector2 = (_target.global_position - global_position).normalized()
-	var angle: float = dir.angle() - deg_to_rad(225)
-	_sprite.rotation = angle
+	var dir: Vector2 = target_position - from_position
+	if dir.length_squared() <= 0.0001:
+		return
+	_sprite.rotation = _get_up_facing_rotation(dir.normalized())
+
+func _get_up_facing_rotation(dir: Vector2) -> float:
+	return dir.angle() + PI * 0.5
 
 func _get_projectile_start_position() -> Vector2:
 	if tower_type != "cannon" or not _target or not is_instance_valid(_target):
 		return global_position
-	var muzzle_x: float = 22.0 if _target.global_position.x > global_position.x else -22.0
-	return global_position + Vector2(muzzle_x, -28.0)
+	var dir: Vector2 = (_target.global_position - global_position).normalized()
+	return global_position + dir * 34.0
 
 func _draw() -> void:
 	if _show_range:
@@ -216,18 +227,22 @@ func _update_sprite_texture() -> void:
 		_sprite.visible = false
 		return
 	
-	var image: Image = Image.load_from_file(texture_path)
-	if not image:
+	var texture: Texture2D = _get_tower_texture(texture_path)
+	if not texture:
 		_sprite.visible = false
 		return
 	
-	var texture: ImageTexture = ImageTexture.create_from_image(image)
 	var target_height: float = _get_tower_target_height()
 	var scale_factor: float = target_height / float(texture.get_height())
 	_sprite.texture = texture
 	_sprite.scale = Vector2.ONE * scale_factor
 	_sprite.position = Vector2(0, -texture.get_height() * scale_factor * 0.5 + 8.0)
 	_sprite.visible = true
+
+func _get_tower_texture(texture_path: String) -> Texture2D:
+	if not _tower_texture_cache.has(texture_path):
+		_tower_texture_cache[texture_path] = load(texture_path) as Texture2D
+	return _tower_texture_cache[texture_path]
 
 func _get_tower_texture_path() -> String:
 	match tower_type:
@@ -276,29 +291,24 @@ func _update_upgrade_icon() -> void:
 func _on_gold_changed(_new_gold: int) -> void:
 	_update_upgrade_icon()
 
-func _get_path_points() -> void:
+func _get_entrance_points() -> void:
+	_entrance_points.clear()
 	if _battle_root and is_instance_valid(_battle_root):
 		var level_data: LevelData = GameManager.get_level_data(GameManager.current_level_id)
-		if level_data and level_data.path_points.size() > 0:
-			_path_points = level_data.path_points[0]
+		if not level_data:
+			return
+		for path_points: PackedVector2Array in level_data.path_points:
+			if path_points.size() > 0:
+				_entrance_points.append(path_points[0])
 
 func _set_initial_rotation() -> void:
-	if not _sprite or tower_type != "cannon" or _path_points.size() < 2:
+	if not _sprite or tower_type != "cannon" or _entrance_points.size() == 0:
 		return
-	var closest_point: Vector2 = _path_points[0]
-	var closest_dist: float = global_position.distance_to(_path_points[0])
-	var closest_idx: int = 0
-	for i in range(1, _path_points.size()):
-		var dist: float = global_position.distance_to(_path_points[i])
+	var entrance: Vector2 = _entrance_points[0]
+	var closest_dist: float = global_position.distance_to(entrance)
+	for i in range(1, _entrance_points.size()):
+		var dist: float = global_position.distance_to(_entrance_points[i])
 		if dist < closest_dist:
 			closest_dist = dist
-			closest_point = _path_points[i]
-			closest_idx = i
-	var target_point: Vector2
-	if closest_idx < _path_points.size() - 1:
-		target_point = _path_points[closest_idx + 1]
-	else:
-		target_point = _path_points[closest_idx - 1]
-	var dir: Vector2 = (target_point - closest_point).normalized()
-	if dir.length_squared() > 0.0001:
-		_sprite.rotation = dir.angle() - deg_to_rad(225)
+			entrance = _entrance_points[i]
+	_aim_sprite_at_position(entrance)
