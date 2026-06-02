@@ -1,5 +1,9 @@
 extends Node2D
 
+const BACKGROUND_TEXTURE: Texture2D = preload("res://assets/maps/background/grass_bg.png")
+const BUILD_SPOT_TEXTURE: Texture2D = preload("res://assets/maps/build_spots/build_spot_base.png")
+const VILLAGE_TEXTURE: Texture2D = preload("res://assets/maps/village/village_core.png")
+
 var _level_data: LevelData
 var _spawner: Node
 var _wave_mgr: Node
@@ -38,11 +42,12 @@ func _create_map() -> void:
 	_draw_entrances()
 
 func _draw_background() -> void:
-	var bg: ColorRect = ColorRect.new()
-	bg.color = _level_data.bg_color
-	bg.size = Vector2(1280, 720)
-	bg.z_index = -10
-	_map_drawer.add_child(bg)
+	var bg_sprite: Sprite2D = Sprite2D.new()
+	bg_sprite.texture = BACKGROUND_TEXTURE
+	bg_sprite.centered = false
+	bg_sprite.scale = Vector2(1280.0 / BACKGROUND_TEXTURE.get_width(), 720.0 / BACKGROUND_TEXTURE.get_height())
+	bg_sprite.z_index = -10
+	_map_drawer.add_child(bg_sprite)
 
 func _draw_paths() -> void:
 	for path_points: PackedVector2Array in _level_data.path_points:
@@ -69,54 +74,25 @@ func _draw_paths() -> void:
 func _draw_build_spots() -> void:
 	for i in range(_level_data.build_spots.size()):
 		var pos: Vector2 = _level_data.build_spots[i]
-		var spot: ColorRect = ColorRect.new()
-		spot.position = pos - Vector2(22, 22)
-		spot.size = Vector2(44, 44)
-		spot.color = Color(0.6, 0.55, 0.3, 0.5)
-		spot.z_index = -3
-		_map_drawer.add_child(spot)
-		
-		var border: ReferenceRect = ReferenceRect.new()
-		border.position = pos - Vector2(22, 22)
-		border.size = Vector2(44, 44)
-		border.border_color = Color(0.8, 0.75, 0.4, 0.7)
-		border.editor_only = false
-		border.z_index = -2
-		_map_drawer.add_child(border)
+		var spot_texture: AtlasTexture = _make_atlas_texture(BUILD_SPOT_TEXTURE, Rect2(204, 92, 1645, 981))
+		var spot_sprite: Sprite2D = Sprite2D.new()
+		spot_sprite.texture = spot_texture
+		spot_sprite.position = pos
+		spot_sprite.scale = Vector2.ONE * (62.0 / maxf(spot_texture.get_width(), spot_texture.get_height()))
+		spot_sprite.z_index = -3
+		_map_drawer.add_child(spot_sprite)
 
 func _draw_village() -> void:
 	_village_drawer = Node2D.new()
 	_village_drawer.position = _level_data.village_position
 	_village_drawer.z_index = 0
 	_map_drawer.add_child(_village_drawer)
-	
-	var house: ColorRect = ColorRect.new()
-	house.position = Vector2(-25, -30)
-	house.size = Vector2(50, 35)
-	house.color = Color(0.7, 0.5, 0.3)
-	_village_drawer.add_child(house)
-	
-	var roof: Polygon2D = Polygon2D.new()
-	roof.polygon = PackedVector2Array([
-		Vector2(-30, -30),
-		Vector2(0, -55),
-		Vector2(30, -30)
-	])
-	roof.color = Color(0.8, 0.25, 0.2)
-	_village_drawer.add_child(roof)
-	
-	var door: ColorRect = ColorRect.new()
-	door.position = Vector2(-8, -5)
-	door.size = Vector2(16, 20)
-	door.color = Color(0.4, 0.25, 0.1)
-	_village_drawer.add_child(door)
-	
-	var label: Label = Label.new()
-	label.text = "村庄"
-	label.position = Vector2(-20, 15)
-	label.add_theme_font_size_override("font_size", 16)
-	label.add_theme_color_override("font_color", Color.WHITE)
-	_village_drawer.add_child(label)
+	var village_texture: AtlasTexture = _make_atlas_texture(VILLAGE_TEXTURE, Rect2(576, 104, 885, 901))
+	var village_sprite: Sprite2D = Sprite2D.new()
+	village_sprite.texture = village_texture
+	village_sprite.scale = Vector2.ONE * (118.0 / village_texture.get_height())
+	village_sprite.position = Vector2(0, -32)
+	_village_drawer.add_child(village_sprite)
 
 func _draw_entrances() -> void:
 	for path_points: PackedVector2Array in _level_data.path_points:
@@ -127,6 +103,12 @@ func _draw_entrances() -> void:
 			entrance.add_theme_font_size_override("font_size", 14)
 			entrance.add_theme_color_override("font_color", Color(1, 0.6, 0.6))
 			_map_drawer.add_child(entrance)
+
+func _make_atlas_texture(texture: Texture2D, region: Rect2) -> AtlasTexture:
+	var atlas: AtlasTexture = AtlasTexture.new()
+	atlas.atlas = texture
+	atlas.region = region
+	return atlas
 
 func _create_managers() -> void:
 	var spawner_script: GDScript = load("res://scripts/monsters/monster_spawner.gd")

@@ -130,11 +130,13 @@ func _shoot() -> void:
 	if not _target or not is_instance_valid(_target):
 		return
 	
+	_aim_sprite_at_target()
+	var projectile_start: Vector2 = _get_projectile_start_position()
 	var projectile_script: GDScript = load("res://scripts/towers/projectile.gd")
 	var projectile: CharacterBody2D = CharacterBody2D.new()
 	projectile.set_script(projectile_script)
 	projectile.setup(
-		global_position,
+		projectile_start,
 		_target,
 		get_damage(),
 		tower_data.projectile_speed,
@@ -147,6 +149,17 @@ func _shoot() -> void:
 	battle.add_child(projectile)
 	
 	AudioManager.play_sfx("attack_" + tower_type)
+
+func _aim_sprite_at_target() -> void:
+	if not _sprite or tower_type != "cannon" or not _target or not is_instance_valid(_target):
+		return
+	_sprite.flip_h = _target.global_position.x > global_position.x
+
+func _get_projectile_start_position() -> Vector2:
+	if tower_type != "cannon" or not _target or not is_instance_valid(_target):
+		return global_position
+	var muzzle_x: float = 22.0 if _target.global_position.x > global_position.x else -22.0
+	return global_position + Vector2(muzzle_x, -28.0)
 
 func _draw() -> void:
 	if _show_range:
@@ -182,7 +195,7 @@ func _draw() -> void:
 func _setup_sprite() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.name = "TowerSprite"
-	_sprite.centered = false
+	_sprite.centered = true
 	add_child(_sprite)
 	_update_sprite_texture()
 
@@ -205,7 +218,7 @@ func _update_sprite_texture() -> void:
 	var scale_factor: float = target_height / float(texture.get_height())
 	_sprite.texture = texture
 	_sprite.scale = Vector2.ONE * scale_factor
-	_sprite.position = Vector2(-texture.get_width() * scale_factor * 0.5, -texture.get_height() * scale_factor + 8.0)
+	_sprite.position = Vector2(0, -texture.get_height() * scale_factor * 0.5 + 8.0)
 	_sprite.visible = true
 
 func _get_tower_texture_path() -> String:

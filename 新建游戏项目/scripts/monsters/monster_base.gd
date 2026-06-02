@@ -4,6 +4,7 @@ signal monster_died(reward: int)
 signal monster_reached_end
 
 const WOLF_SHEET: Texture2D = preload("res://assets/monsters/wolf/wolf_sheet.png")
+const DEATH_SMOKE_SHEET: Texture2D = preload("res://assets/effects/新建文件夹/death_smoke_sheet.png")
 const WOLF_FRAME_COUNT: int = 4
 const WOLF_FRAME_SIZE: Vector2 = Vector2(640, 1440)
 
@@ -150,7 +151,34 @@ func die() -> void:
 	AudioManager.play_sfx("monster_die")
 	GameManager.on_monster_killed(data.reward)
 	monster_died.emit(data.reward)
+	_spawn_death_smoke()
 	queue_free()
+
+func _spawn_death_smoke() -> void:
+	var effect: AnimatedSprite2D = AnimatedSprite2D.new()
+	effect.sprite_frames = _create_death_smoke_frames()
+	effect.animation = "smoke"
+	effect.global_position = global_position
+	effect.scale = Vector2.ONE * 0.1
+	effect.z_index = 5
+	var root: Node = get_tree().current_scene
+	if root:
+		root.add_child(effect)
+		effect.play("smoke")
+		effect.animation_finished.connect(effect.queue_free)
+
+func _create_death_smoke_frames() -> SpriteFrames:
+	var frames: SpriteFrames = SpriteFrames.new()
+	frames.add_animation("smoke")
+	frames.set_animation_loop("smoke", false)
+	frames.set_animation_speed("smoke", 12.0)
+	var frame_width: float = DEATH_SMOKE_SHEET.get_width() / 4.0
+	for i in range(4):
+		var frame: AtlasTexture = AtlasTexture.new()
+		frame.atlas = DEATH_SMOKE_SHEET
+		frame.region = Rect2(frame_width * i, 0, frame_width, DEATH_SMOKE_SHEET.get_height())
+		frames.add_frame("smoke", frame)
+	return frames
 
 func _draw() -> void:
 	if not data:
