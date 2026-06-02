@@ -1,14 +1,14 @@
 extends Control
 
-signal start_wave_pressed
-signal back_pressed
+signal pause_pressed
+signal settings_pressed
 
 var _gold_label: Label
 var _health_label: Label
 var _wave_label: Label
 var _monster_label: Label
-var _start_wave_btn: Button
-var _back_btn: Button
+var _pause_btn: Button
+var _settings_btn: Button
 
 func _ready() -> void:
 	_setup_ui()
@@ -21,14 +21,16 @@ func _setup_ui() -> void:
 	var top_bar: ColorRect = ColorRect.new()
 	top_bar.color = Color(0, 0, 0, 0.6)
 	top_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	top_bar.custom_minimum_size = Vector2(0, 60)
+	top_bar.custom_minimum_size = Vector2(0, 70)
+	top_bar.z_index = 100
 	add_child(top_bar)
 	
 	var h_box: HBoxContainer = HBoxContainer.new()
 	h_box.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	h_box.offset_top = 12
+	h_box.offset_top = 15
 	h_box.offset_left = 20
-	h_box.offset_right = -20
+	h_box.offset_right = -120
+	h_box.z_index = 101
 	add_child(h_box)
 	
 	_gold_label = Label.new()
@@ -60,33 +62,29 @@ func _setup_ui() -> void:
 	_monster_label.add_theme_color_override("font_color", Color.LIGHT_GRAY)
 	h_box.add_child(_monster_label)
 	
-	_start_wave_btn = Button.new()
-	_start_wave_btn.text = "开始波次"
-	_start_wave_btn.anchor_left = 1.0
-	_start_wave_btn.anchor_top = 1.0
-	_start_wave_btn.anchor_right = 1.0
-	_start_wave_btn.anchor_bottom = 1.0
-	_start_wave_btn.offset_left = -200
-	_start_wave_btn.offset_top = -75
-	_start_wave_btn.offset_right = -15
-	_start_wave_btn.offset_bottom = -15
-	_start_wave_btn.add_theme_font_size_override("font_size", 24)
-	_start_wave_btn.pressed.connect(func(): start_wave_pressed.emit())
-	add_child(_start_wave_btn)
+	var buttons_hbox: HBoxContainer = HBoxContainer.new()
+	buttons_hbox.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	buttons_hbox.offset_top = 15
+	buttons_hbox.offset_right = -20
+	buttons_hbox.z_index = 101
+	add_child(buttons_hbox)
 	
-	_back_btn = Button.new()
-	_back_btn.text = "返回"
-	_back_btn.anchor_left = 0.0
-	_back_btn.anchor_top = 1.0
-	_back_btn.anchor_right = 0.0
-	_back_btn.anchor_bottom = 1.0
-	_back_btn.offset_left = 15
-	_back_btn.offset_top = -75
-	_back_btn.offset_right = 145
-	_back_btn.offset_bottom = -15
-	_back_btn.add_theme_font_size_override("font_size", 24)
-	_back_btn.pressed.connect(func(): back_pressed.emit())
-	add_child(_back_btn)
+	_pause_btn = Button.new()
+	_pause_btn.text = "暂停"
+	_pause_btn.custom_minimum_size = Vector2(80, 40)
+	_pause_btn.add_theme_font_size_override("font_size", 20)
+	_pause_btn.pressed.connect(func(): pause_pressed.emit())
+	buttons_hbox.add_child(_pause_btn)
+	
+	var btn_sep: Control = _make_spacer(10)
+	buttons_hbox.add_child(btn_sep)
+	
+	_settings_btn = Button.new()
+	_settings_btn.text = "设置"
+	_settings_btn.custom_minimum_size = Vector2(80, 40)
+	_settings_btn.add_theme_font_size_override("font_size", 20)
+	_settings_btn.pressed.connect(func(): settings_pressed.emit())
+	buttons_hbox.add_child(_settings_btn)
 
 func _make_spacer(width: float) -> Control:
 	var c: Control = Control.new()
@@ -109,18 +107,9 @@ func update_monster_count(count: int) -> void:
 	if _monster_label:
 		_monster_label.text = "剩余怪物: %d" % count
 
-func update_start_button(can_start: bool, all_done: bool) -> void:
-	if not _start_wave_btn:
-		return
-	if all_done:
-		_start_wave_btn.text = "已完成"
-		_start_wave_btn.disabled = true
-	elif can_start:
-		_start_wave_btn.text = "开始波次"
-		_start_wave_btn.disabled = false
-	else:
-		_start_wave_btn.text = "进行中..."
-		_start_wave_btn.disabled = true
+func update_pause_button(is_paused: bool) -> void:
+	if _pause_btn:
+		_pause_btn.text = "继续" if is_paused else "暂停"
 
 func _on_gold_changed(new_gold: int) -> void:
 	update_gold(new_gold)

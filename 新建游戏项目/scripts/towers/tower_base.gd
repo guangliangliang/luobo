@@ -12,6 +12,8 @@ var _show_range: bool = false
 var _total_invested: int = 0
 var _battle_root: Node = null
 var _sprite: Sprite2D = null
+var _upgrade_icon: Node2D = null
+var _path_points: PackedVector2Array = []
 
 func setup(type: String, data: TowerData) -> void:
 	tower_type = type
@@ -20,9 +22,12 @@ func setup(type: String, data: TowerData) -> void:
 	_attack_timer = 0.0
 	_battle_root = get_tree().current_scene
 	_setup_sprite()
+	_setup_upgrade_icon()
+	_get_path_points()
 	_calculate_range_circle()
 	set_process(true)
 	queue_redraw()
+	call_deferred("_set_initial_rotation")
 
 func get_damage() -> float:
 	var idx: int = mini(tower_level - 1, tower_data.damage.size() - 1)
@@ -69,6 +74,7 @@ func upgrade() -> void:
 		_total_invested += cost
 		AudioManager.play_sfx("upgrade")
 		_update_sprite_texture()
+		_update_upgrade_icon()
 		_calculate_range_circle()
 		queue_redraw()
 
@@ -153,7 +159,9 @@ func _shoot() -> void:
 func _aim_sprite_at_target() -> void:
 	if not _sprite or tower_type != "cannon" or not _target or not is_instance_valid(_target):
 		return
-	_sprite.flip_h = _target.global_position.x > global_position.x
+	var dir: Vector2 = (_target.global_position - global_position).normalized()
+	var angle: float = dir.angle() - deg_to_rad(225)
+	_sprite.rotation = angle
 
 func _get_projectile_start_position() -> Vector2:
 	if tower_type != "cannon" or not _target or not is_instance_valid(_target):
@@ -244,3 +252,53 @@ func _get_tower_target_height() -> float:
 func is_click_in_area(click_pos: Vector2) -> bool:
 	var local_pos: Vector2 = to_local(click_pos)
 	return abs(local_pos.x) <= 25 and local_pos.y >= -55 and local_pos.y <= 10
+
+func _setup_upgrade_icon() -> void:
+	_upgrade_icon = Node2D.new()
+	_upgrade_icon.name = "UpgradeIcon"
+	_upgrade_icon.position = Vector2(0, -70)
+	add_child(_upgrade_icon)
+	_update_upgrade_icon()
+
+func _update_upgrade_icon() -> void:
+	if not _upgrade_icon:
+		return
+	for child in _upgrade_icon.get_children():
+		child.queue_free()
+	if can_upgrade() and GameManager.current_gold >= get_upgrade_cost():
+		var label: Label = Label.new()
+		label.text = "↑"
+		label.position = Vector2(-8, -5)
+		label.add_theme_font_size_override("font_size", 20)
+		label.add_theme_color_override("font_color", Color.YELLOW)
+		_upgrade_icon.add_child(label)
+
+func _on_gold_changed(_new_gold: int) -> void:
+	_update_upgrade_icon()
+
+func _get_path_points() -> void:
+	if _battle_root and is_instance_valid(_battle_root):
+		var level_data: LevelData = GameManager.get_level_data(GameManager.current_level_id)
+		if level_data and level_data.path_points.size() > 0:
+			_path_points = level_data.path_points[0]
+
+func _set_initial_rotation() -> void:
+	if not _sprite or tower_type != "cannon" or _path_points.size() < 2:
+		return
+	var closest_point: Vector2 = _path_points[0]
+	var closest_dist: float = global_position.distance_to(_path_points[0])
+	var closest_idx: int = 0
+	for i in range(1, _path_points.size()):
+		var dist: float = global_position.distance_to(_path_points[i])
+		if dist < closest_dist:
+			closest_dist = dist
+			closest_point = _path_points[i]
+			closest_idx = i
+	var target_point: Vector2
+	if closest_idx < _path_points.size() - 1:
+		target_point = _path_points[closest_idx + 1]
+	else:
+		target_point = _path_points[closest_idx - 1]
+	var dir: Vector2 = (target_point - closest_point).normalized()
+	if dir.length_squared() > 0.0001:
+		_sprite.rotation = dir.angle() - deg_to_rad(225)

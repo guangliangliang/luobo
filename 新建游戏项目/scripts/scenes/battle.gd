@@ -12,10 +12,15 @@ var _battle_mgr: Node
 var _hud: Control
 var _build_menu: Control
 var _tower_menu: Control
+var _settings_dialog: Control
+var _countdown_label: Label
 var _selected_spot: int = -1
 var _map_drawer: Node2D
 var _village_drawer: Node2D
 var _selected_tower: Node2D = null
+var _is_paused: bool = false
+var _game_started: bool = false
+var _level_info_dialog: Control
 
 func _ready() -> void:
 	_level_data = GameManager.get_level_data(GameManager.current_level_id)
@@ -23,6 +28,7 @@ func _ready() -> void:
 		return
 	_create_battle_scene()
 	GameManager.start_battle(GameManager.current_level_id)
+	_start_countdown()
 
 func _create_battle_scene() -> void:
 	_create_map()
@@ -163,10 +169,41 @@ func _create_ui() -> void:
 	_tower_menu.set_script(tower_menu_script)
 	canvas.add_child(_tower_menu)
 	_tower_menu.visible = false
+	
+	var settings_dialog_script: GDScript = load("res://scripts/ui/settings_dialog.gd")
+	_settings_dialog = Control.new()
+	_settings_dialog.name = "SettingsDialog"
+	_settings_dialog.set_script(settings_dialog_script)
+	canvas.add_child(_settings_dialog)
+	_settings_dialog.visible = false
+	
+	_countdown_label = Label.new()
+	_countdown_label.name = "CountdownLabel"
+	_countdown_label.custom_minimum_size = Vector2(300, 200)
+	_countdown_label.add_theme_font_size_override("font_size", 120)
+	_countdown_label.add_theme_color_override("font_color", Color.WHITE)
+	_countdown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_countdown_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_countdown_label.anchors_preset = Control.PRESET_CENTER
+	_countdown_label.z_index = 200
+	canvas.add_child(_countdown_label)
+	_countdown_label.visible = false
+	
+	var level_info_script: GDScript = load("res://scripts/ui/level_info_dialog.gd")
+	_level_info_dialog = Control.new()
+	_level_info_dialog.name = "LevelInfoDialog"
+	_level_info_dialog.set_script(level_info_script)
+	canvas.add_child(_level_info_dialog)
+	_level_info_dialog.visible = false
 
 func _connect_signals() -> void:
-	_hud.start_wave_pressed.connect(_on_start_wave)
-	_hud.back_pressed.connect(_on_back_pressed)
+	_hud.pause_pressed.connect(_on_pause_pressed)
+	_hud.settings_pressed.connect(_on_settings_pressed)
+	_settings_dialog.exit_level_pressed.connect(_on_exit_level)
+	_settings_dialog.level_info_pressed.connect(_on_level_info)
+	_settings_dialog.restart_level_pressed.connect(_on_restart_level)
+	_settings_dialog.continue_pressed.connect(_on_continue)
+	_level_info_dialog.close_pressed.connect(_on_close_level_info)
 	_build_menu.tower_selected.connect(_on_build_tower)
 	_build_menu.cancel_pressed.connect(_on_cancel_build)
 	_tower_menu.upgrade_pressed.connect(_on_upgrade_tower)
@@ -176,12 +213,75 @@ func _connect_signals() -> void:
 	_wave_mgr.wave_completed.connect(_on_wave_completed)
 	GameManager.gold_changed.connect(_on_gold_changed)
 
-func _on_back_pressed() -> void:
+func _on_pause_pressed() -> void:
+	_toggle_pause()
+
+func _on_settings_pressed() -> void:
+	if not _is_paused:
+		_toggle_pause()
+	_settings_dialog.show_dialog(_is_paused)
+
+func _on_exit_level() -> void:
+	_settings_dialog.hide_dialog()
+	if _is_paused:
+		_toggle_pause()
 	GameManager.is_battle_active = false
 	get_tree().change_scene_to_file("res://scenes/LevelSelect.tscn")
 
-func _on_start_wave() -> void:
+func _on_level_info() -> void:
+	_settings_dialog.hide_dialog()
+	_level_info_dialog.visible = true
+
+func _on_close_level_info() -> void:
+	_level_info_dialog.visible = false
+
+func _on_restart_level() -> void:
+	_settings_dialog.hide_dialog()
+	if _is_paused:
+		_toggle_pause()
+	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+
+func _on_continue() -> void:
+	_settings_dialog.hide_dialog()
+	if _is_paused:
+		_toggle_pause()
+
+func _toggle_pause() -> void:
+	_is_paused = !_is_paused
+	get_tree().paused = _is_paused
+	_hud.update_pause_button(_is_paused)
+
+var _countdown_timer: Timer
+var _countdown_count: int = 3
+
+func _start_countdown() -> void:
+	_countdown_label.visible = true
+	_countdown_count = 3
+	_countdown_label.text = str(_countdown_count)
+	
+	_countdown_timer = Timer.new()
+	_countdown_timer.wait_time = 1.0
+	_countdown_timer.autostart = true
+	_countdown_timer.one_shot = false
+	_countdown_timer.timeout.connect(_on_countdown_tick)
+	add_child(_countdown_timer)
+
+func _on_countdown_tick() -> void:
+	_countdown_count -= 1
+	if _countdown_count > 0:
+		_countdown_label.text = str(_countdown_count)
+	else:
+		_countdown_label.text = "开始！"
+		_countdown_timer.stop()
+		_countdown_timer.queue_free()
+		_countdown_timer = null
+		await get_tree().create_timer(0.5).timeout
+		_countdown_label.visible = false
+		_auto_start_first_wave()
+
+func _auto_start_first_wave() -> void:
 	if _wave_mgr.can_start_wave():
+		_game_started = true
 		_wave_mgr.start_next_wave()
 		_spawner.start_wave(_wave_mgr._current_wave)
 
@@ -247,7 +347,6 @@ func _update_hud() -> void:
 		_hud.update_health(GameManager.village_health)
 		_hud.update_wave(_wave_mgr.get_current_wave(), _wave_mgr.get_total_waves())
 		_hud.update_monster_count(_spawner.get_active_count())
-		_hud.update_start_button(_wave_mgr.can_start_wave(), _wave_mgr.is_all_done())
 
 func _input(event: InputEvent) -> void:
 	var click_pos: Vector2 = Vector2.ZERO

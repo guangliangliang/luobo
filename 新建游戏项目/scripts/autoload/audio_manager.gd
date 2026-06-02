@@ -2,6 +2,7 @@ extends Node
 
 var _audio_players: Dictionary = {}
 var _sfx_enabled: bool = true
+var _bgm_volume: float = 0.5
 
 func _ready() -> void:
 	_create_placeholder_streams()
@@ -76,3 +77,9 @@ func _generate_tone(name: String) -> AudioStream:
 	
 	sample.data = data
 	return sample
+
+func set_bgm_volume(volume: float) -> void:
+	_bgm_volume = clamp(volume, 0.0, 1.0)
+
+func get_bgm_volume() -> float:
+	return _bgm_volume

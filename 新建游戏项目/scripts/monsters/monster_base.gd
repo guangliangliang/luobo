@@ -152,6 +152,7 @@ func die() -> void:
 	GameManager.on_monster_killed(data.reward)
 	monster_died.emit(data.reward)
 	_spawn_death_smoke()
+	_spawn_gold_popup(data.reward)
 	queue_free()
 
 func _spawn_death_smoke() -> void:
@@ -179,6 +180,25 @@ func _create_death_smoke_frames() -> SpriteFrames:
 		frame.region = Rect2(frame_width * i, 0, frame_width, DEATH_SMOKE_SHEET.get_height())
 		frames.add_frame("smoke", frame)
 	return frames
+
+func _spawn_gold_popup(reward: int) -> void:
+	var popup: Label = Label.new()
+	popup.text = "+%d" % reward
+	popup.global_position = global_position + Vector2(0, -20)
+	popup.z_index = 10
+	popup.add_theme_font_size_override("font_size", 16)
+	popup.add_theme_color_override("font_color", Color(1, 0.9, 0.2))
+	popup.add_theme_color_override("font_outline_color", Color(0.2, 0.1, 0))
+	popup.add_theme_constant_override("outline_size", 2)
+	popup.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var root: Node = get_tree().current_scene
+	if root:
+		root.add_child(popup)
+		var tween: Tween = popup.create_tween()
+		tween.set_ease(Tween.EASE_OUT)
+		tween.tween_property(popup, "position:y", popup.position.y - 40, 0.6)
+		tween.tween_property(popup, "modulate:a", 0, 0.2)
+		tween.finished.connect(popup.queue_free)
 
 func _draw() -> void:
 	if not data:
