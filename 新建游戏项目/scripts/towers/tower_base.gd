@@ -3,6 +3,8 @@ extends Node2D
 signal tower_selected(tower: Node2D)
 
 const PROJECTILE_SCRIPT: GDScript = preload("res://scripts/towers/projectile.gd")
+const BUILD_SPOT_TEXTURE: Texture2D = preload("res://assets/maps/build_spots/build_spot_base.png")
+const BUILD_SPOT_REGION := Rect2(204, 92, 1645, 981)
 
 static var _tower_texture_cache: Dictionary = {}
 
@@ -16,6 +18,7 @@ var _show_range: bool = false
 var _total_invested: int = 0
 var _battle_root: Node = null
 var _sprite: Sprite2D = null
+var _base_sprite: Sprite2D = null
 var _upgrade_icon: Node2D = null
 var _entrance_points: PackedVector2Array = []
 
@@ -25,6 +28,7 @@ func setup(type: String, data: TowerData) -> void:
 	_total_invested = data.cost
 	_attack_timer = 0.0
 	_battle_root = get_tree().current_scene
+	_setup_base_sprite()
 	_setup_sprite()
 	_setup_upgrade_icon()
 	_get_entrance_points()
@@ -217,6 +221,22 @@ func _setup_sprite() -> void:
 	_sprite.centered = true
 	add_child(_sprite)
 	_update_sprite_texture()
+
+func _setup_base_sprite() -> void:
+	_base_sprite = Sprite2D.new()
+	_base_sprite.name = "BaseSprite"
+	_base_sprite.texture = _make_base_texture()
+	_base_sprite.centered = true
+	_base_sprite.position = Vector2(0, 12)
+	_base_sprite.scale = Vector2.ONE * (62.0 / maxf(_base_sprite.texture.get_width(), _base_sprite.texture.get_height()))
+	_base_sprite.z_index = -1
+	add_child(_base_sprite)
+
+func _make_base_texture() -> AtlasTexture:
+	var atlas: AtlasTexture = AtlasTexture.new()
+	atlas.atlas = BUILD_SPOT_TEXTURE
+	atlas.region = BUILD_SPOT_REGION
+	return atlas
 
 func _update_sprite_texture() -> void:
 	if not _sprite:

@@ -3,6 +3,7 @@ extends Node2D
 const BACKGROUND_TEXTURE: Texture2D = preload("res://assets/maps/background/grass_bg.png")
 const BUILD_SPOT_TEXTURE: Texture2D = preload("res://assets/maps/build_spots/build_spot_base.png")
 const VILLAGE_TEXTURE: Texture2D = preload("res://assets/maps/village/village_core.png")
+const BUILD_SPOT_REGION := Rect2(204, 92, 1645, 981)
 
 var _level_data: LevelData
 var _spawner: Node
@@ -14,9 +15,10 @@ var _build_menu: Control
 var _tower_menu: Control
 var _settings_dialog: Control
 var _countdown_label: Label
-var _selected_spot: int = -1
+var _selected_build_position: Vector2 = Vector2.ZERO
 var _map_drawer: Node2D
 var _village_drawer: Node2D
+var _build_spot_sprites: Dictionary = {}
 var _selected_tower: Node2D = null
 var _is_paused: bool = false
 var _game_started: bool = false
@@ -32,8 +34,8 @@ func _ready() -> void:
 	_start_countdown()
 
 func _create_battle_scene() -> void:
-	_create_map()
 	_create_managers()
+	_create_map()
 	_create_ui()
 	_connect_signals()
 	_update_hud()
@@ -78,17 +80,6 @@ func _draw_paths() -> void:
 		line_border.end_cap_mode = Line2D.LINE_CAP_ROUND
 		_map_drawer.add_child(line_border)
 
-func _draw_build_spots() -> void:
-	for i in range(_level_data.build_spots.size()):
-		var pos: Vector2 = _level_data.build_spots[i]
-		var spot_texture: AtlasTexture = _make_atlas_texture(BUILD_SPOT_TEXTURE, Rect2(204, 92, 1645, 981))
-		var spot_sprite: Sprite2D = Sprite2D.new()
-		spot_sprite.texture = spot_texture
-		spot_sprite.position = pos
-		spot_sprite.scale = Vector2.ONE * (62.0 / maxf(spot_texture.get_width(), spot_texture.get_height()))
-		spot_sprite.z_index = -3
-		_map_drawer.add_child(spot_sprite)
-
 func _draw_village() -> void:
 	_village_drawer = Node2D.new()
 	_village_drawer.position = _level_data.village_position
@@ -110,6 +101,19 @@ func _draw_entrances() -> void:
 			entrance.add_theme_font_size_override("font_size", 14)
 			entrance.add_theme_color_override("font_color", Color(1, 0.6, 0.6))
 			_map_drawer.add_child(entrance)
+
+func _draw_build_spots() -> void:
+	_build_spot_sprites.clear()
+	var spot_texture: AtlasTexture = _make_atlas_texture(BUILD_SPOT_TEXTURE, BUILD_SPOT_REGION)
+	for spot: Dictionary in _build_mgr.get_build_spots():
+		var spot_sprite: Sprite2D = Sprite2D.new()
+		spot_sprite.texture = spot_texture
+		spot_sprite.position = spot.position
+		spot_sprite.scale = Vector2.ONE * (62.0 / maxf(spot_texture.get_width(), spot_texture.get_height()))
+		spot_sprite.z_index = -3
+		_map_drawer.add_child(spot_sprite)
+		_build_spot_sprites[int(spot.index)] = spot_sprite
+	_refresh_build_spot_markers()
 
 func _make_atlas_texture(texture: Texture2D, region: Rect2) -> AtlasTexture:
 	var atlas: AtlasTexture = AtlasTexture.new()
@@ -215,6 +219,7 @@ func _connect_signals() -> void:
 	_tower_menu.upgrade_pressed.connect(_on_upgrade_tower)
 	_tower_menu.sell_pressed.connect(_on_sell_tower)
 	_tower_menu.cancel_pressed.connect(_on_cancel_tower_menu)
+	_build_mgr.tower_placed.connect(_on_tower_placed)
 	_wave_mgr.wave_started.connect(_on_wave_started)
 	_wave_mgr.wave_completed.connect(_on_wave_completed)
 	GameManager.gold_changed.connect(_on_gold_changed)
@@ -305,15 +310,15 @@ func _auto_start_next_wave() -> void:
 		_spawner.start_wave(_wave_mgr._current_wave)
 
 func _on_build_tower(tower_type: String) -> void:
-	if _selected_spot >= 0:
-		_build_mgr.build_tower(_selected_spot, tower_type)
+	if _build_mgr.can_build_at_position(_selected_build_position):
+		_build_mgr.build_tower_at_position(_selected_build_position, tower_type)
 		_build_menu.hide_menu()
-		_selected_spot = -1
+		_selected_build_position = Vector2.ZERO
 		_update_hud()
 
 func _on_cancel_build() -> void:
 	_build_menu.hide_menu()
-	_selected_spot = -1
+	_selected_build_position = Vector2.ZERO
 
 func _on_upgrade_tower() -> void:
 	var tower: Node2D = _tower_menu.get_tower()
@@ -333,6 +338,7 @@ func _on_sell_tower() -> void:
 		tower.sell()
 		if spot_idx >= 0:
 			_build_mgr.free_spot(spot_idx)
+			_refresh_build_spot_markers()
 	_selected_tower = null
 	_tower_menu.hide_menu()
 	_update_hud()
@@ -346,6 +352,9 @@ func _on_gold_changed(_new_gold: int) -> void:
 		_tower_menu._update_info()
 	if _build_menu and _build_menu.visible:
 		_build_menu._update_button_states()
+
+func _on_tower_placed(_tower: Node2D, _spot_index: int) -> void:
+	_refresh_build_spot_markers()
 
 func _update_hud() -> void:
 	if _hud and _wave_mgr and _spawner:
@@ -368,7 +377,7 @@ func _input(event: InputEvent) -> void:
 		if menu_rect.has_point(click_pos):
 			return
 		_build_menu.hide_menu()
-		_selected_spot = -1
+		_selected_build_position = Vector2.ZERO
 	
 	if _tower_menu and _tower_menu.visible:
 		var tower_rect: Rect2 = _tower_menu.get_global_rect()
@@ -386,22 +395,32 @@ func _input(event: InputEvent) -> void:
 			return
 	
 	var spot_idx: int = _build_mgr.get_spot_index_at_position(click_pos)
-	if spot_idx >= 0:
-		if _build_mgr.is_spot_occupied(spot_idx):
-			var spot_tower: Node2D = _build_mgr.get_tower_at_spot(spot_idx)
-			if spot_tower and is_instance_valid(spot_tower):
-				_hide_tower_range()
-				_selected_tower = spot_tower
-				spot_tower.show_range(true)
-				_tower_menu.show_for_tower(spot_tower, click_pos)
-		else:
-			_selected_spot = spot_idx
-			_build_menu.show_at(click_pos)
+	if spot_idx >= 0 and _build_mgr.is_spot_occupied(spot_idx):
+		var spot_tower: Node2D = _build_mgr.get_tower_at_spot(spot_idx)
+		if spot_tower and is_instance_valid(spot_tower):
+			_hide_tower_range()
+			_selected_tower = spot_tower
+			spot_tower.show_range(true)
+			_tower_menu.show_for_tower(spot_tower, click_pos)
+		return
+
+	if _build_mgr.can_build_at_position(click_pos):
+		_selected_build_position = click_pos
+		_build_menu.show_at(click_pos)
 
 func _hide_tower_range() -> void:
 	if _selected_tower and is_instance_valid(_selected_tower):
 		_selected_tower.show_range(false)
 	_selected_tower = null
+
+func _refresh_build_spot_markers() -> void:
+	if _build_mgr == null:
+		return
+	for spot: Dictionary in _build_mgr.get_build_spots():
+		var spot_index: int = int(spot.index)
+		if _build_spot_sprites.has(spot_index):
+			var marker: Sprite2D = _build_spot_sprites[spot_index]
+			marker.visible = not _build_mgr.is_spot_occupied(spot_index)
 
 func _process(_delta: float) -> void:
 	if _is_paused:
