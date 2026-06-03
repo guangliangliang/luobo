@@ -65,15 +65,17 @@ func _get_walk_frames(monster_type: String) -> SpriteFrames:
 	return frames
 
 func _load_single_frame_animation(frames: SpriteFrames, monster_type: String) -> bool:
+	var textures: Array[Texture2D] = []
 	for i in range(WOLF_FRAME_COUNT):
 		var path: String = "res://assets/monsters/%s/%s_walk_%02d.png" % [monster_type, monster_type, i + 1]
-		if not FileAccess.file_exists(path):
+		var texture: Texture2D = load(path) as Texture2D
+		if not texture:
 			return false
+		textures.append(texture)
 
 	for i in range(WOLF_FRAME_COUNT):
-		var texture: Texture2D = load("res://assets/monsters/%s/%s_walk_%02d.png" % [monster_type, monster_type, i + 1])
 		var frame: AtlasTexture = AtlasTexture.new()
-		frame.atlas = texture
+		frame.atlas = textures[i]
 		frame.region = _get_frame_region(monster_type, i)
 		frames.add_frame("walk", frame)
 	return true

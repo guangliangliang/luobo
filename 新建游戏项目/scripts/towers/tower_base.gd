@@ -250,7 +250,7 @@ func _update_sprite_texture() -> void:
 		return
 	
 	var texture_path: String = _get_tower_texture_path()
-	if texture_path.is_empty() or not FileAccess.file_exists(texture_path):
+	if texture_path.is_empty():
 		_sprite.visible = false
 		return
 	
