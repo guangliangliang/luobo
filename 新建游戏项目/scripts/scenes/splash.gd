@@ -16,6 +16,7 @@ var _loading_frame: int = 0
 var _loading_dot_count: int = 1
 
 func _ready() -> void:
+	AudioManager.play_bgm("menu")
 	_setup_base_ui()
 	_setup_loading_ui()
 	await get_tree().create_timer(1.5).timeout

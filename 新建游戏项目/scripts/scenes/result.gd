@@ -11,12 +11,19 @@ var _result_data: Dictionary = {}
 
 func _ready() -> void:
 	_result_data = GameManager.last_result
+	_play_result_bgm()
 	_setup_ui()
 	_update_display()
 
 func set_result_data(data: Dictionary) -> void:
 	_result_data = data
+	_play_result_bgm()
 	_update_display()
+
+func _play_result_bgm() -> void:
+	if not AudioManager:
+		return
+	AudioManager.play_bgm("victory" if _result_data.get("won", false) else "defeat")
 
 func _setup_ui() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

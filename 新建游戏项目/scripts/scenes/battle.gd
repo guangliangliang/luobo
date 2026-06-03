@@ -26,6 +26,7 @@ var _level_info_dialog: Control
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	AudioManager.play_bgm("battle")
 	_level_data = GameManager.get_level_data(GameManager.current_level_id)
 	if not _level_data:
 		return

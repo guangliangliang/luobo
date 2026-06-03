@@ -19,6 +19,7 @@ func _on_all_waves_completed() -> void:
 	if _result_shown:
 		return
 	GameManager.is_battle_active = false
+	AudioManager.play_bgm("victory", true)
 	AudioManager.play_sfx("victory")
 	await get_tree().create_timer(1.5).timeout
 	_show_result(true)
@@ -26,6 +27,7 @@ func _on_all_waves_completed() -> void:
 func _on_game_lost() -> void:
 	if _result_shown:
 		return
+	AudioManager.play_bgm("defeat", true)
 	AudioManager.play_sfx("defeat")
 	await get_tree().create_timer(1.5).timeout
 	_show_result(false)

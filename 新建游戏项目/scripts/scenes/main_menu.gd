@@ -8,6 +8,7 @@ const BUTTON_PRESSED: Texture2D = preload("res://assets/ui/buttons/button_menu_p
 const BUTTON_REGION: Rect2 = Rect2(145, 350, 1245, 289)
 
 func _ready() -> void:
+	AudioManager.play_bgm("menu")
 	_setup_ui()
 
 func _setup_ui() -> void:

@@ -16,6 +16,7 @@ const LEVEL_TEXT_SELECTED: Color = Color(0.72, 0.26, 0.02)
 var _level_buttons: Dictionary = {}
 
 func _ready() -> void:
+	AudioManager.play_bgm("menu")
 	_setup_ui()
 
 func _setup_ui() -> void:
