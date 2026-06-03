@@ -62,7 +62,8 @@ func _make_hud_button(text: String) -> Button:
 	var button: Button = Button.new()
 	button.text = text
 	button.flat = true
-	button.custom_minimum_size = Vector2(72, 42)
+	button.custom_minimum_size = Vector2(96, 42)
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.add_theme_font_size_override("font_size", 22)
 	button.add_theme_color_override("font_color", Color.WHITE)
 	button.add_theme_color_override("font_hover_color", Color(1.0, 0.9, 0.45))

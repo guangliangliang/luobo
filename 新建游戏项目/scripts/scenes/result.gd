@@ -98,10 +98,11 @@ func _setup_ui() -> void:
 	btn_vbox.add_child(menu_btn)
 
 func _apply_result_button_style(button: Button) -> void:
-	button.custom_minimum_size = Vector2(260, 68)
-	_apply_menu_button_style(button, 26)
+	button.custom_minimum_size = Vector2(228, 68)
+	_apply_menu_button_style(button, 23)
 
 func _apply_menu_button_style(button: Button, font_size: int) -> void:
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.add_theme_stylebox_override("normal", _make_button_style(BUTTON_NORMAL))
 	button.add_theme_stylebox_override("hover", _make_button_style(BUTTON_HOVER))
 	button.add_theme_stylebox_override("pressed", _make_button_style(BUTTON_PRESSED))
@@ -109,7 +110,9 @@ func _apply_menu_button_style(button: Button, font_size: int) -> void:
 	button.add_theme_color_override("font_color", Color(1.0, 0.9, 0.48))
 	button.add_theme_color_override("font_hover_color", Color(1.0, 0.96, 0.62))
 	button.add_theme_color_override("font_pressed_color", Color(0.95, 0.76, 0.35))
+	button.add_theme_color_override("font_outline_color", Color(0.36, 0.12, 0.02, 0.95))
 	button.add_theme_color_override("font_shadow_color", Color(0.2, 0.08, 0.02, 0.95))
+	button.add_theme_constant_override("outline_size", 2)
 	button.add_theme_constant_override("shadow_offset_x", 2)
 	button.add_theme_constant_override("shadow_offset_y", 2)
 
@@ -125,6 +128,10 @@ func _make_button_style(texture: Texture2D) -> StyleBoxTexture:
 	style.set_texture_margin(SIDE_RIGHT, 56)
 	style.set_texture_margin(SIDE_TOP, 20)
 	style.set_texture_margin(SIDE_BOTTOM, 20)
+	style.set_content_margin(SIDE_LEFT, 54)
+	style.set_content_margin(SIDE_RIGHT, 54)
+	style.set_content_margin(SIDE_TOP, 14)
+	style.set_content_margin(SIDE_BOTTOM, 18)
 	return style
 
 func _update_display() -> void:

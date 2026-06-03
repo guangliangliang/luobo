@@ -103,7 +103,8 @@ func _create_bgm_control(parent: VBoxContainer) -> void:
 func _make_menu_button(text: String) -> Button:
 	var button: Button = Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(300, 44)
+	button.custom_minimum_size = Vector2(180, 44)
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.add_theme_font_size_override("font_size", 21)
 	return button
 

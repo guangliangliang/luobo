@@ -110,7 +110,8 @@ func _setup_ui() -> void:
 func _make_tab_button(text: String) -> Button:
 	var button: Button = Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(150, 42)
+	button.custom_minimum_size = Vector2(118, 42)
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.add_theme_font_size_override("font_size", 21)
 	return button
 
