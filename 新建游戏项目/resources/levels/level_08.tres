@@ -1,0 +1,102 @@
+[gd_resource type="Resource" script_class="LevelData" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/level_data.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/resources/wave_data.gd" id="2_script"]
+
+[sub_resource type="Resource" id="WaveData_wave1"]
+script = ExtResource("2_script")
+monster_type = "wolf"
+count = 34
+spawn_interval = 0.34
+path_index = -1
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave2"]
+script = ExtResource("2_script")
+monster_type = "bandit"
+count = 20
+spawn_interval = 0.38
+path_index = -1
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave3"]
+script = ExtResource("2_script")
+monster_type = "bear"
+count = 3
+spawn_interval = 0.9
+path_index = -1
+is_boss = false
+support_monster_type = "wolf"
+support_count = 26
+support_spawn_interval = 0.30
+
+[sub_resource type="Resource" id="WaveData_wave4"]
+script = ExtResource("2_script")
+monster_type = "bandit"
+count = 34
+spawn_interval = 0.30
+path_index = -1
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave5"]
+script = ExtResource("2_script")
+monster_type = "wolf"
+count = 56
+spawn_interval = 0.22
+path_index = -1
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave6"]
+script = ExtResource("2_script")
+monster_type = "bear"
+count = 5
+spawn_interval = 0.75
+path_index = -1
+is_boss = false
+support_monster_type = "bandit"
+support_count = 20
+support_spawn_interval = 0.32
+
+[sub_resource type="Resource" id="WaveData_wave7"]
+script = ExtResource("2_script")
+monster_type = "bear"
+count = 7
+spawn_interval = 0.7
+path_index = -1
+is_boss = true
+support_monster_type = "bandit"
+support_count = 24
+support_spawn_interval = 0.30
+
+[sub_resource type="Resource" id="WaveData_wave8"]
+script = ExtResource("2_script")
+monster_type = "wolf"
+count = 70
+spawn_interval = 0.18
+path_index = -1
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave9"]
+script = ExtResource("2_script")
+monster_type = "bear"
+count = 8
+spawn_interval = 0.62
+path_index = -1
+is_boss = true
+support_monster_type = "bandit"
+support_count = 30
+support_spawn_interval = 0.26
+
+[resource]
+script = ExtResource("1_script")
+level_name = "最后防线"
+level_id = 8
+starting_gold = 700
+village_health = 6
+village_position = Vector2(1200, 360)
+path_points = [PackedVector2Array(40, 200, 240, 200, 240, 120, 520, 120, 520, 360, 820, 360, 820, 260, 1020, 260, 1020, 360, 1144, 360), PackedVector2Array(40, 520, 240, 520, 240, 620, 520, 620, 520, 360, 820, 360, 820, 460, 1020, 460, 1020, 360, 1144, 360)]
+build_spots = PackedVector2Array()
+waves = [SubResource("WaveData_wave1"), SubResource("WaveData_wave2"), SubResource("WaveData_wave3"), SubResource("WaveData_wave4"), SubResource("WaveData_wave5"), SubResource("WaveData_wave6"), SubResource("WaveData_wave7"), SubResource("WaveData_wave8"), SubResource("WaveData_wave9")]
+bg_color = Color(0.10, 0.21, 0.09, 1)
+path_color = Color(0.45, 0.32, 0.17, 1)
+path_width = 35.0

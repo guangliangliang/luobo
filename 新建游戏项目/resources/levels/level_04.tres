@@ -1,0 +1,80 @@
+[gd_resource type="Resource" script_class="LevelData" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/level_data.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/resources/wave_data.gd" id="2_script"]
+
+[sub_resource type="Resource" id="WaveData_wave1"]
+script = ExtResource("2_script")
+monster_type = "wolf"
+count = 22
+spawn_interval = 0.44
+path_index = 0
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave2"]
+script = ExtResource("2_script")
+monster_type = "bandit"
+count = 10
+spawn_interval = 0.55
+path_index = 0
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave3"]
+script = ExtResource("2_script")
+monster_type = "bandit"
+count = 16
+spawn_interval = 0.48
+path_index = 0
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave4"]
+script = ExtResource("2_script")
+monster_type = "wolf"
+count = 30
+spawn_interval = 0.34
+path_index = 0
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave5"]
+script = ExtResource("2_script")
+monster_type = "bandit"
+count = 22
+spawn_interval = 0.42
+path_index = 0
+is_boss = false
+
+[sub_resource type="Resource" id="WaveData_wave6"]
+script = ExtResource("2_script")
+monster_type = "bear"
+count = 2
+spawn_interval = 1.3
+path_index = 0
+is_boss = false
+support_monster_type = "bandit"
+support_count = 10
+support_spawn_interval = 0.42
+
+[sub_resource type="Resource" id="WaveData_wave7"]
+script = ExtResource("2_script")
+monster_type = "bear"
+count = 3
+spawn_interval = 1.2
+path_index = 0
+is_boss = true
+support_monster_type = "bandit"
+support_count = 16
+support_spawn_interval = 0.4
+
+[resource]
+script = ExtResource("1_script")
+level_name = "盗匪急袭"
+level_id = 4
+starting_gold = 450
+village_health = 9
+village_position = Vector2(1200, 360)
+path_points = [PackedVector2Array(40, 260, 360, 260, 360, 460, 680, 460, 680, 300, 980, 300, 980, 360, 1144, 360)]
+build_spots = PackedVector2Array()
+waves = [SubResource("WaveData_wave1"), SubResource("WaveData_wave2"), SubResource("WaveData_wave3"), SubResource("WaveData_wave4"), SubResource("WaveData_wave5"), SubResource("WaveData_wave6"), SubResource("WaveData_wave7")]
+bg_color = Color(0.18, 0.27, 0.10, 1)
+path_color = Color(0.52, 0.39, 0.21, 1)
+path_width = 35.0

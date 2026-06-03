@@ -12,8 +12,15 @@ const BUTTON_REGION: Rect2 = Rect2(145, 350, 1245, 289)
 const LEVEL_TEXT_NORMAL: Color = Color(0.28, 0.12, 0.02)
 const LEVEL_TEXT_HOVER: Color = Color(0.18, 0.08, 0.01)
 const LEVEL_TEXT_SELECTED: Color = Color(0.72, 0.26, 0.02)
+const DRAG_THRESHOLD: float = 8.0
 
 var _level_buttons: Dictionary = {}
+var _level_scroll: ScrollContainer
+var _dragging_levels: bool = false
+var _drag_start_x: float = 0.0
+var _drag_start_scroll: int = 0
+var _drag_moved: bool = false
+var _suppress_press_until_ms: int = 0
 
 func _ready() -> void:
 	AudioManager.play_bgm("menu")
@@ -36,9 +43,9 @@ func _setup_ui() -> void:
 
 	var center: VBoxContainer = VBoxContainer.new()
 	center.set_anchors_preset(Control.PRESET_CENTER)
-	center.offset_left = -310
+	center.offset_left = -520
 	center.offset_top = -285
-	center.offset_right = 310
+	center.offset_right = 520
 	center.offset_bottom = 285
 	center.add_theme_constant_override("separation", 10)
 	center.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -61,20 +68,34 @@ func _setup_ui() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	center.add_child(title)
 
+	_level_scroll = ScrollContainer.new()
+	_level_scroll.custom_minimum_size = Vector2(980, 172)
+	_level_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_level_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_level_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
+	center.add_child(_level_scroll)
+
 	var levels_hbox: HBoxContainer = HBoxContainer.new()
-	levels_hbox.add_theme_constant_override("separation", 44)
+	levels_hbox.custom_minimum_size = Vector2(0, 158)
+	levels_hbox.add_theme_constant_override("separation", 26)
 	levels_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	center.add_child(levels_hbox)
+	_level_scroll.add_child(levels_hbox)
 
 	var level_configs: Array = [
 		{"id": 1, "name": "第一关\n村口防线"},
 		{"id": 2, "name": "第二关\n分兵两路"},
+		{"id": 3, "name": "第三关\n林间岔口"},
+		{"id": 4, "name": "第四关\n盗匪急袭"},
+		{"id": 5, "name": "第五关\n环村小路"},
+		{"id": 6, "name": "第六关\n南北夹击"},
+		{"id": 7, "name": "第七关\n三面围攻"},
+		{"id": 8, "name": "第八关\n最后防线"},
 	]
 
 	for cfg: Dictionary in level_configs:
 		var btn: Button = Button.new()
 		btn.text = cfg.name
-		btn.custom_minimum_size = Vector2(280, 150)
+		btn.custom_minimum_size = Vector2(246, 150)
 		_apply_level_button_style(btn)
 		btn.pressed.connect(_on_level_pressed.bind(cfg.id))
 		levels_hbox.add_child(btn)
@@ -164,7 +185,51 @@ func _update_buttons() -> void:
 			btn.disabled = true
 			btn.modulate = Color.WHITE
 
+func _input(event: InputEvent) -> void:
+	if not _level_scroll:
+		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
+		if mouse_event.pressed and _level_scroll.get_global_rect().has_point(mouse_event.position):
+			_dragging_levels = true
+			_drag_moved = false
+			_drag_start_x = mouse_event.position.x
+			_drag_start_scroll = _level_scroll.scroll_horizontal
+		elif not mouse_event.pressed and _dragging_levels:
+			if _drag_moved:
+				_suppress_press_until_ms = Time.get_ticks_msec() + 160
+			_dragging_levels = false
+	elif event is InputEventMouseMotion and _dragging_levels:
+		var motion_event: InputEventMouseMotion = event as InputEventMouseMotion
+		var delta_x: float = motion_event.position.x - _drag_start_x
+		if absf(delta_x) > DRAG_THRESHOLD:
+			_drag_moved = true
+		if _drag_moved:
+			_level_scroll.scroll_horizontal = max(0, _drag_start_scroll - int(delta_x))
+			accept_event()
+	elif event is InputEventScreenTouch:
+		var touch_event: InputEventScreenTouch = event as InputEventScreenTouch
+		if touch_event.pressed and _level_scroll.get_global_rect().has_point(touch_event.position):
+			_dragging_levels = true
+			_drag_moved = false
+			_drag_start_x = touch_event.position.x
+			_drag_start_scroll = _level_scroll.scroll_horizontal
+		elif not touch_event.pressed and _dragging_levels:
+			if _drag_moved:
+				_suppress_press_until_ms = Time.get_ticks_msec() + 160
+			_dragging_levels = false
+	elif event is InputEventScreenDrag and _dragging_levels:
+		var drag_event: InputEventScreenDrag = event as InputEventScreenDrag
+		var delta_touch_x: float = drag_event.position.x - _drag_start_x
+		if absf(delta_touch_x) > DRAG_THRESHOLD:
+			_drag_moved = true
+		if _drag_moved:
+			_level_scroll.scroll_horizontal = max(0, _drag_start_scroll - int(delta_touch_x))
+			accept_event()
+
 func _on_level_pressed(level_id: int) -> void:
+	if Time.get_ticks_msec() < _suppress_press_until_ms:
+		return
 	GameManager.current_level_id = level_id
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 

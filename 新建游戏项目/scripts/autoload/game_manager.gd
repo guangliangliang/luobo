@@ -32,6 +32,12 @@ func _load_configs() -> void:
 	_load_monster_data("bear", "res://resources/monsters/bear.tres")
 	_load_level_data(1, "res://resources/levels/level_01.tres")
 	_load_level_data(2, "res://resources/levels/level_02.tres")
+	_load_level_data(3, "res://resources/levels/level_03.tres")
+	_load_level_data(4, "res://resources/levels/level_04.tres")
+	_load_level_data(5, "res://resources/levels/level_05.tres")
+	_load_level_data(6, "res://resources/levels/level_06.tres")
+	_load_level_data(7, "res://resources/levels/level_07.tres")
+	_load_level_data(8, "res://resources/levels/level_08.tres")
 
 func _load_tower_data(key: String, path: String) -> void:
 	var res: TowerData = load(path)
