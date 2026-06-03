@@ -4,6 +4,7 @@ signal tower_selected(tower: Node2D)
 
 const PROJECTILE_SCRIPT: GDScript = preload("res://scripts/towers/projectile.gd")
 const BUILD_SPOT_TEXTURE: Texture2D = preload("res://assets/maps/build_spots/build_spot_base.png")
+const GOLD_ICON: Texture2D = preload("res://assets/ui/icons/icon_gold.png")
 const BUILD_SPOT_REGION := Rect2(204, 92, 1645, 981)
 
 static var _tower_texture_cache: Dictionary = {}
@@ -31,6 +32,8 @@ func setup(type: String, data: TowerData) -> void:
 	_setup_base_sprite()
 	_setup_sprite()
 	_setup_upgrade_icon()
+	if not GameManager.gold_changed.is_connected(_on_gold_changed):
+		GameManager.gold_changed.connect(_on_gold_changed)
 	_get_entrance_points()
 	_calculate_range_circle()
 	set_process(true)
@@ -91,6 +94,10 @@ func sell() -> void:
 	GameManager.add_gold(sell_value)
 	AudioManager.play_sfx("sell")
 	queue_free()
+
+func _exit_tree() -> void:
+	if GameManager.gold_changed.is_connected(_on_gold_changed):
+		GameManager.gold_changed.disconnect(_on_gold_changed)
 
 func show_range(show: bool) -> void:
 	_show_range = show
@@ -291,7 +298,8 @@ func is_click_in_area(click_pos: Vector2) -> bool:
 func _setup_upgrade_icon() -> void:
 	_upgrade_icon = Node2D.new()
 	_upgrade_icon.name = "UpgradeIcon"
-	_upgrade_icon.position = Vector2(0, -70)
+	_upgrade_icon.position = Vector2(-44, -92)
+	_upgrade_icon.z_index = 30
 	add_child(_upgrade_icon)
 	_update_upgrade_icon()
 
@@ -299,14 +307,78 @@ func _update_upgrade_icon() -> void:
 	if not _upgrade_icon:
 		return
 	for child in _upgrade_icon.get_children():
+		_upgrade_icon.remove_child(child)
 		child.queue_free()
-	if can_upgrade() and GameManager.current_gold >= get_upgrade_cost():
-		var label: Label = Label.new()
-		label.text = "↑"
-		label.position = Vector2(-8, -5)
-		label.add_theme_font_size_override("font_size", 20)
-		label.add_theme_color_override("font_color", Color.YELLOW)
-		_upgrade_icon.add_child(label)
+	if not can_upgrade():
+		return
+	var cost: int = get_upgrade_cost()
+	if GameManager.current_gold < cost:
+		return
+
+	var badge: PanelContainer = PanelContainer.new()
+	badge.size = Vector2(88, 30)
+	badge.custom_minimum_size = Vector2(88, 30)
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_theme_stylebox_override("panel", _create_upgrade_badge_stylebox())
+	_upgrade_icon.add_child(badge)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 7)
+	margin.add_theme_constant_override("margin_top", 3)
+	margin.add_theme_constant_override("margin_right", 7)
+	margin.add_theme_constant_override("margin_bottom", 3)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_child(margin)
+
+	var row: HBoxContainer = HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 4)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(row)
+
+	var arrow_label: Label = Label.new()
+	arrow_label.text = "↑"
+	arrow_label.add_theme_font_size_override("font_size", 18)
+	arrow_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.25))
+	arrow_label.add_theme_color_override("font_outline_color", Color(0.08, 0.05, 0.02))
+	arrow_label.add_theme_constant_override("outline_size", 2)
+	arrow_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(arrow_label)
+
+	var gold_icon: TextureRect = TextureRect.new()
+	gold_icon.custom_minimum_size = Vector2(16, 16)
+	gold_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	gold_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	gold_icon.texture = GOLD_ICON
+	gold_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(gold_icon)
+
+	var cost_label: Label = Label.new()
+	cost_label.text = "%d" % cost
+	cost_label.add_theme_font_size_override("font_size", 14)
+	cost_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.25))
+	cost_label.add_theme_color_override("font_outline_color", Color(0.08, 0.05, 0.02))
+	cost_label.add_theme_constant_override("outline_size", 2)
+	cost_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(cost_label)
+
+func _create_upgrade_badge_stylebox() -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.10, 0.08, 0.04, 0.92)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.border_color = Color(1.0, 0.72, 0.22)
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.36)
+	style.shadow_size = 5
+	style.shadow_offset = Vector2(0, 2)
+	return style
 
 func _on_gold_changed(_new_gold: int) -> void:
 	_update_upgrade_icon()

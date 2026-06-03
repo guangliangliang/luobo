@@ -8,6 +8,6 @@ monster_name = "强盗"
 monster_type = "bandit"
 max_health = 50
 move_speed = 150.0
-reward = 80
+reward = 45
 body_color = Color(0.6, 0.4, 0.2, 1)
 body_radius = 14.0

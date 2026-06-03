@@ -3,6 +3,7 @@ extends Node2D
 const BACKGROUND_TEXTURE: Texture2D = preload("res://assets/maps/background/grass_bg.png")
 const BUILD_SPOT_TEXTURE: Texture2D = preload("res://assets/maps/build_spots/build_spot_base.png")
 const VILLAGE_TEXTURE: Texture2D = preload("res://assets/maps/village/village_core.png")
+const HEALTH_ICON: Texture2D = preload("res://assets/ui/icons/icon_health.png")
 const BUILD_SPOT_REGION := Rect2(204, 92, 1645, 981)
 
 var _level_data: LevelData
@@ -18,6 +19,7 @@ var _countdown_label: Label
 var _selected_build_position: Vector2 = Vector2.ZERO
 var _map_drawer: Node2D
 var _village_drawer: Node2D
+var _village_health_label: Label
 var _build_spot_sprites: Dictionary = {}
 var _selected_tower: Node2D = null
 var _is_paused: bool = false
@@ -91,7 +93,76 @@ func _draw_village() -> void:
 	village_sprite.texture = village_texture
 	village_sprite.scale = Vector2.ONE * (118.0 / village_texture.get_height())
 	village_sprite.position = Vector2(0, -32)
+	village_sprite.z_index = 8
 	_village_drawer.add_child(village_sprite)
+	_create_village_health_marker()
+
+func _create_village_health_marker() -> void:
+	var marker: PanelContainer = PanelContainer.new()
+	marker.position = Vector2(-58, -126)
+	marker.size = Vector2(116, 34)
+	marker.custom_minimum_size = Vector2(116, 34)
+	marker.z_index = 20
+	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	marker.add_theme_stylebox_override("panel", _create_village_health_stylebox())
+	_village_drawer.add_child(marker)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_bottom", 4)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	marker.add_child(margin)
+
+	var row: HBoxContainer = HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 5)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(row)
+
+	var icon: TextureRect = TextureRect.new()
+	icon.custom_minimum_size = Vector2(22, 22)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture = HEALTH_ICON
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(icon)
+
+	_village_health_label = Label.new()
+	_village_health_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_village_health_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_village_health_label.add_theme_font_size_override("font_size", 17)
+	_village_health_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.88))
+	_village_health_label.add_theme_color_override("font_outline_color", Color(0.16, 0.03, 0.02))
+	_village_health_label.add_theme_constant_override("outline_size", 2)
+	_village_health_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(_village_health_label)
+	_update_village_health_marker()
+
+func _create_village_health_stylebox() -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.16, 0.04, 0.03, 0.88)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.border_color = Color(0.95, 0.33, 0.25)
+	style.shadow_color = Color(0, 0, 0, 0.38)
+	style.shadow_size = 6
+	style.shadow_offset = Vector2(0, 2)
+	return style
+
+func _update_village_health_marker() -> void:
+	if not _village_health_label:
+		return
+	var max_health: int = maxi(GameManager.max_village_health, GameManager.village_health)
+	_village_health_label.text = "%d/%d" % [GameManager.village_health, max_health]
 
 func _draw_entrances() -> void:
 	for path_points: PackedVector2Array in _level_data.path_points:
@@ -224,6 +295,7 @@ func _connect_signals() -> void:
 	_wave_mgr.wave_started.connect(_on_wave_started)
 	_wave_mgr.wave_completed.connect(_on_wave_completed)
 	GameManager.gold_changed.connect(_on_gold_changed)
+	GameManager.village_health_changed.connect(_on_village_health_changed)
 
 func _on_pause_pressed() -> void:
 	_toggle_pause()
@@ -354,6 +426,9 @@ func _on_gold_changed(_new_gold: int) -> void:
 	if _build_menu and _build_menu.visible:
 		_build_menu._update_button_states()
 
+func _on_village_health_changed(_new_health: int) -> void:
+	_update_village_health_marker()
+
 func _on_tower_placed(_tower: Node2D, _spot_index: int) -> void:
 	_refresh_build_spot_markers()
 
@@ -361,6 +436,7 @@ func _update_hud() -> void:
 	if _hud and _wave_mgr and _spawner:
 		_hud.update_gold(GameManager.current_gold)
 		_hud.update_health(GameManager.village_health)
+		_update_village_health_marker()
 		_hud.update_wave(_wave_mgr.get_current_wave(), _wave_mgr.get_total_waves())
 		_hud.update_monster_count(_spawner.get_active_count())
 

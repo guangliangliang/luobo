@@ -411,6 +411,8 @@ func _get_current_level_monster_types() -> Array:
 	for wave: WaveData in level_data.waves:
 		if not result.has(wave.monster_type):
 			result.append(wave.monster_type)
+		if wave.support_monster_type != "" and not result.has(wave.support_monster_type):
+			result.append(wave.support_monster_type)
 	return result
 
 func _tower_image_path(tower_type: String, level_index: int = 0) -> String:

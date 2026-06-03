@@ -8,6 +8,6 @@ monster_name = "野狼"
 monster_type = "wolf"
 max_health = 30
 move_speed = 80.0
-reward = 50
+reward = 25
 body_color = Color(0.5, 0.5, 0.5, 1)
 body_radius = 12.0

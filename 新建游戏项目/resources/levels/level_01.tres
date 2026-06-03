@@ -6,51 +6,54 @@
 [sub_resource type="Resource" id="WaveData_wave1"]
 script = ExtResource("2_script")
 monster_type = "wolf"
-count = 10
-spawn_interval = 0.75
+count = 12
+spawn_interval = 0.68
 path_index = 0
 is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave2"]
 script = ExtResource("2_script")
 monster_type = "wolf"
-count = 14
-spawn_interval = 0.65
+count = 16
+spawn_interval = 0.58
 path_index = 0
 is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave3"]
 script = ExtResource("2_script")
 monster_type = "bandit"
-count = 4
-spawn_interval = 0.9
+count = 6
+spawn_interval = 0.8
 path_index = 0
 is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave4"]
 script = ExtResource("2_script")
 monster_type = "wolf"
-count = 18
-spawn_interval = 0.55
+count = 22
+spawn_interval = 0.48
 path_index = 0
 is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave5"]
 script = ExtResource("2_script")
 monster_type = "bear"
-count = 1
-spawn_interval = 2.0
+count = 2
+spawn_interval = 1.6
 path_index = 0
 is_boss = true
+support_monster_type = "wolf"
+support_count = 8
+support_spawn_interval = 0.48
 
 [resource]
 script = ExtResource("1_script")
 level_name = "村口防线"
 level_id = 1
-starting_gold = 400
-village_health = 18
+starting_gold = 300
+village_health = 14
 village_position = Vector2(1200, 360)
-path_points = [PackedVector2Array(40, 360, 200, 360, 200, 140, 480, 140, 480, 560, 760, 560, 760, 360, 1240, 360)]
+path_points = [PackedVector2Array(40, 360, 200, 360, 200, 140, 480, 140, 480, 560, 760, 560, 760, 360, 1144, 360)]
 build_spots = PackedVector2Array(120, 250, 120, 470, 340, 70, 340, 230, 560, 70, 400, 470, 680, 470, 680, 650, 560, 340, 900, 250, 900, 470, 1080, 250, 1080, 470)
 waves = [SubResource("WaveData_wave1"), SubResource("WaveData_wave2"), SubResource("WaveData_wave3"), SubResource("WaveData_wave4"), SubResource("WaveData_wave5")]
 bg_color = Color(0.18, 0.32, 0.12, 1)
