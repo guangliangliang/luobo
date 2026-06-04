@@ -2,6 +2,7 @@ extends Node2D
 
 signal all_monsters_spawned
 signal wave_complete
+signal monster_count_changed(count: int)
 
 const MONSTER_SCENE: PackedScene = preload("res://scenes/Monster.tscn")
 
@@ -11,12 +12,14 @@ var _is_spawning: bool = false
 var _active_monsters: Array[PathFollow2D] = []
 var _current_wave_index: int = -1
 var _path_curves: Array = []
+var _path_nodes: Array[Path2D] = []
 var _level_data: LevelData
 var _all_spawned_emitted: bool = false
 
 func setup(level_data: LevelData) -> void:
 	_level_data = level_data
 	_build_path_curves()
+	_create_path_nodes()
 	set_process(true)
 
 func _build_path_curves() -> void:
@@ -26,6 +29,18 @@ func _build_path_curves() -> void:
 		for point: Vector2 in path_points:
 			curve.add_point(point)
 		_path_curves.append(curve)
+
+func _create_path_nodes() -> void:
+	for path_node: Path2D in _path_nodes:
+		if is_instance_valid(path_node):
+			path_node.queue_free()
+	_path_nodes.clear()
+	for i in range(_path_curves.size()):
+		var path: Path2D = Path2D.new()
+		path.name = "MonsterPath%d" % i
+		path.curve = _path_curves[i]
+		add_child(path)
+		_path_nodes.append(path)
 
 func start_wave(wave_index: int) -> void:
 	if wave_index >= _level_data.waves.size():
@@ -54,6 +69,7 @@ func start_wave(wave_index: int) -> void:
 		_append_spawn_entries(wave.monster_type, wave.count, wave.spawn_interval, path_indices)
 	
 	_spawn_timer = 0.0
+	_emit_monster_count_changed()
 
 func _append_spawn_entries(monster_type: String, count: int, interval: float, path_indices: Array[int]) -> void:
 	if count <= 0 or path_indices.is_empty():
@@ -86,6 +102,7 @@ func _process(delta: float) -> void:
 	if _spawn_timer <= 0:
 		var info: Dictionary = _spawn_queue.pop_front()
 		_spawn_monster(info.monster_type, info.path_index)
+		_emit_monster_count_changed()
 		if _spawn_queue.size() > 0:
 			_spawn_timer = _spawn_queue[0].interval
 		else:
@@ -103,35 +120,40 @@ func _emit_all_spawned_once() -> void:
 	all_monsters_spawned.emit()
 
 func _spawn_monster(monster_type: String, path_index: int) -> void:
-	if path_index >= _path_curves.size():
+	if path_index >= _path_nodes.size():
+		_emit_monster_count_changed()
 		return
 	var monster_data: MonsterData = GameManager.get_monster_data(monster_type)
 	if not monster_data:
+		_emit_monster_count_changed()
 		return
 	
-	var path: Path2D = Path2D.new()
-	path.curve = _path_curves[path_index]
-	add_child(path)
-	
 	var follow: PathFollow2D = MONSTER_SCENE.instantiate()
+	var path: Path2D = _path_nodes[path_index]
 	path.add_child(follow)
 	
 	follow.setup(monster_data, _level_data.path_points[path_index])
 	
 	_active_monsters.append(follow)
-	follow.tree_exiting.connect(_on_monster_removed.bind(follow, path))
+	follow.tree_exiting.connect(_on_monster_removed.bind(follow))
 	follow.monster_reached_end.connect(_on_monster_reached_end.bind(follow))
 
-func _on_monster_removed(monster: PathFollow2D, path: Path2D) -> void:
-	_active_monsters.erase(monster)
-	if is_instance_valid(path):
-		path.queue_free()
+func _on_monster_removed(monster: PathFollow2D) -> void:
+	_remove_active_monster(monster)
 
 func _on_monster_reached_end(monster: PathFollow2D) -> void:
-	_active_monsters.erase(monster)
+	_remove_active_monster(monster)
 
 func is_wave_clear() -> bool:
 	return _spawn_queue.is_empty() and _active_monsters.is_empty()
 
 func get_all_monsters() -> Array:
 	return _active_monsters
+
+func _emit_monster_count_changed() -> void:
+	monster_count_changed.emit(get_active_count())
+
+func _remove_active_monster(monster: PathFollow2D) -> void:
+	if _active_monsters.has(monster):
+		_active_monsters.erase(monster)
+		_emit_monster_count_changed()

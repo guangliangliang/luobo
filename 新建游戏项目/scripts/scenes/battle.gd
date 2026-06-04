@@ -292,6 +292,7 @@ func _connect_signals() -> void:
 	_tower_menu.sell_pressed.connect(_on_sell_tower)
 	_tower_menu.cancel_pressed.connect(_on_cancel_tower_menu)
 	_build_mgr.tower_placed.connect(_on_tower_placed)
+	_spawner.monster_count_changed.connect(_on_monster_count_changed)
 	_wave_mgr.wave_started.connect(_on_wave_started)
 	_wave_mgr.wave_completed.connect(_on_wave_completed)
 	GameManager.gold_changed.connect(_on_gold_changed)
@@ -432,6 +433,10 @@ func _on_village_health_changed(_new_health: int) -> void:
 func _on_tower_placed(_tower: Node2D, _spot_index: int) -> void:
 	_refresh_build_spot_markers()
 
+func _on_monster_count_changed(count: int) -> void:
+	if _hud:
+		_hud.update_monster_count(count)
+
 func _update_hud() -> void:
 	if _hud and _wave_mgr and _spawner:
 		_hud.update_gold(GameManager.current_gold)
@@ -503,9 +508,6 @@ func _process(_delta: float) -> void:
 	if _is_paused:
 		return
 
-	if _spawner and _hud:
-		_hud.update_monster_count(_spawner.get_active_count())
-	
 	if _wave_mgr and _spawner and _wave_mgr.is_wave_active() and _spawner.is_wave_clear():
 		_wave_mgr.on_wave_monsters_cleared()
 		_update_hud()

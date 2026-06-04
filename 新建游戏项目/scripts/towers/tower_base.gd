@@ -18,6 +18,7 @@ var _range_circle_points: PackedVector2Array = []
 var _show_range: bool = false
 var _total_invested: int = 0
 var _battle_root: Node = null
+var _spawner: Node = null
 var _sprite: Sprite2D = null
 var _base_sprite: Sprite2D = null
 var _upgrade_icon: Node2D = null
@@ -28,7 +29,8 @@ func setup(type: String, data: TowerData) -> void:
 	tower_data = data
 	_total_invested = data.cost
 	_attack_timer = 0.0
-	_battle_root = get_tree().current_scene
+	_battle_root = get_tree().current_scene if is_inside_tree() else null
+	_spawner = _find_spawner()
 	_setup_base_sprite()
 	_setup_sprite()
 	_setup_upgrade_icon()
@@ -131,20 +133,23 @@ func _find_target() -> void:
 		return
 	var monsters: Array = spawner.get_all_monsters()
 	var best_progress: float = -1.0
-	var range: float = get_attack_range()
+	var range_squared: float = get_attack_range() * get_attack_range()
 	
 	for monster in monsters:
 		if not is_instance_valid(monster) or monster.is_dead:
 			continue
-		var dist: float = global_position.distance_to(monster.global_position)
-		if dist <= range:
+		var dist_squared: float = global_position.distance_squared_to(monster.global_position)
+		if dist_squared <= range_squared:
 			if monster.progress_ratio > best_progress:
 				best_progress = monster.progress_ratio
 				_target = monster
 
 func _find_spawner() -> Node:
+	if _spawner and is_instance_valid(_spawner):
+		return _spawner
 	if _battle_root and is_instance_valid(_battle_root):
-		return _battle_root.get_node_or_null("MonsterSpawner")
+		_spawner = _battle_root.get_node_or_null("MonsterSpawner")
+		return _spawner
 	return null
 
 func _shoot() -> void:

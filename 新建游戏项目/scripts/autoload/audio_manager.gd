@@ -18,16 +18,20 @@ const SFX_STREAM_PATHS: Dictionary = {
 	"victory": "res://assets/audio/sfx/victory.wav",
 	"defeat": "res://assets/audio/sfx/defeat.wav",
 }
+const SFX_POOL_SIZE: int = 16
 
 var _bgm_player: AudioStreamPlayer
 var _bgm_streams: Dictionary = {}
 var _sfx_streams: Dictionary = {}
+var _sfx_players: Array[AudioStreamPlayer] = []
+var _sfx_pool_index: int = 0
 var _sfx_enabled: bool = true
 var _bgm_volume: float = 0.5
 var _current_bgm: String = ""
 
 func _ready() -> void:
 	_create_bgm_player()
+	_create_sfx_pool()
 	_prewarm_bgm_streams()
 	_prewarm_sfx_streams()
 
@@ -36,6 +40,14 @@ func _create_bgm_player() -> void:
 	_bgm_player.name = "BGMPlayer"
 	_bgm_player.volume_db = _volume_to_db(_bgm_volume)
 	add_child(_bgm_player)
+
+func _create_sfx_pool() -> void:
+	for i in range(SFX_POOL_SIZE):
+		var player: AudioStreamPlayer = AudioStreamPlayer.new()
+		player.name = "SFXPlayer%d" % i
+		player.volume_db = -10.0
+		add_child(player)
+		_sfx_players.append(player)
 
 func _prewarm_bgm_streams() -> void:
 	for bgm_name: String in BGM_STREAM_PATHS:
@@ -64,15 +76,23 @@ func stop_bgm() -> void:
 func play_sfx(name: String) -> void:
 	if not _sfx_enabled:
 		return
-	var player: AudioStreamPlayer = AudioStreamPlayer.new()
-	add_child(player)
-	
 	var stream: AudioStream = _get_sfx_stream(name)
 	if stream:
+		var player: AudioStreamPlayer = _get_available_sfx_player()
 		player.stream = stream
 		player.volume_db = -10.0
 		player.play()
-		player.finished.connect(player.queue_free)
+
+func _get_available_sfx_player() -> AudioStreamPlayer:
+	if _sfx_players.is_empty():
+		_create_sfx_pool()
+	for player: AudioStreamPlayer in _sfx_players:
+		if not player.playing:
+			return player
+	var player: AudioStreamPlayer = _sfx_players[_sfx_pool_index]
+	_sfx_pool_index = (_sfx_pool_index + 1) % _sfx_players.size()
+	player.stop()
+	return player
 
 func _get_bgm_stream(name: String) -> AudioStream:
 	if not _bgm_streams.has(name):

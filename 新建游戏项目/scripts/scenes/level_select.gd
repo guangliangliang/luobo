@@ -70,7 +70,7 @@ func _setup_ui() -> void:
 
 	_level_scroll = ScrollContainer.new()
 	_level_scroll.custom_minimum_size = Vector2(980, 172)
-	_level_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_level_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	_level_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_level_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
 	center.add_child(_level_scroll)

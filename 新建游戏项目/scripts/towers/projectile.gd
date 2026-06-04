@@ -16,6 +16,7 @@ const HIT_EFFECT_TEXTURES: Dictionary = {
 	"cannon": preload("res://assets/effects/新建文件夹/explosion_sheet.png"),
 	"ice": preload("res://assets/effects/新建文件夹/freeze_hit_sheet.png"),
 }
+const HIT_EFFECT_OFFSET := Vector2(0, -18)
 
 static var _hit_effect_frames_cache: Dictionary = {}
 
@@ -29,6 +30,7 @@ var _slow_percent: float
 var _slow_duration: float
 var _is_active: bool = true
 var _sprite: Sprite2D = null
+var _spawner: Node = null
 
 func setup(start: Vector2, target: Node2D, damage: float, speed: float, tower_type: String, splash_radius: float = 0.0, slow_percent: float = 0.0, slow_duration: float = 0.0) -> void:
 	global_position = start
@@ -42,7 +44,10 @@ func setup(start: Vector2, target: Node2D, damage: float, speed: float, tower_ty
 	_slow_duration = slow_duration
 	_setup_sprite()
 
-func _physics_process(_delta: float) -> void:
+func _ready() -> void:
+	_spawner = _find_spawner()
+
+func _physics_process(delta: float) -> void:
 	if not _is_active:
 		return
 	
@@ -55,14 +60,16 @@ func _physics_process(_delta: float) -> void:
 	if _sprite:
 		_sprite.rotation = direction.angle()
 	
-	var dist: float = global_position.distance_to(_target.global_position)
-	if dist < _speed * get_physics_process_delta_time() + 15.0:
+	var hit_distance: float = _speed * delta + 15.0
+	if global_position.distance_squared_to(_target.global_position) < hit_distance * hit_distance:
 		_hit()
 		return
 	
 	move_and_slide()
 
 func _find_spawner() -> Node:
+	if not is_inside_tree():
+		return null
 	var root: Node = get_tree().current_scene
 	if root:
 		return root.get_node_or_null("MonsterSpawner")
@@ -71,26 +78,23 @@ func _find_spawner() -> Node:
 func _hit() -> void:
 	_is_active = false
 	
-	var spawner: Node = _find_spawner()
+	var spawner: Node = _spawner if (_spawner and is_instance_valid(_spawner)) else _find_spawner()
+	var splash_radius_squared: float = _splash_radius * _splash_radius
 	
 	if _splash_radius > 0:
-		if spawner:
+		if spawner and _target and is_instance_valid(_target):
+			var impact_position: Vector2 = _target.global_position
 			for monster in spawner.get_all_monsters():
 				if is_instance_valid(monster) and not monster.is_dead:
-					if _target and is_instance_valid(_target) and monster.global_position.distance_to(_target.global_position) <= _splash_radius:
+					if monster.global_position.distance_squared_to(impact_position) <= splash_radius_squared:
 						monster.take_damage(_damage)
+						if _slow_percent > 0 and not monster.is_dead:
+							monster.apply_slow(_slow_percent, _slow_duration)
 	else:
 		if _target and is_instance_valid(_target) and not _target.is_dead:
 			_target.take_damage(_damage)
-	
-	if _slow_percent > 0:
-		if _target and is_instance_valid(_target) and not _target.is_dead:
-			_target.apply_slow(_slow_percent, _slow_duration)
-		if _splash_radius > 0 and spawner:
-			for monster in spawner.get_all_monsters():
-				if is_instance_valid(monster) and not monster.is_dead and monster != _target:
-					if _target and is_instance_valid(_target) and monster.global_position.distance_to(_target.global_position) <= _splash_radius:
-						monster.apply_slow(_slow_percent, _slow_duration)
+			if _slow_percent > 0 and not _target.is_dead:
+				_target.apply_slow(_slow_percent, _slow_duration)
 	
 	_spawn_hit_effect()
 	queue_free()
@@ -145,7 +149,8 @@ func _spawn_hit_effect() -> void:
 	var effect: AnimatedSprite2D = AnimatedSprite2D.new()
 	effect.sprite_frames = _get_effect_frames(_tower_type)
 	effect.animation = "hit"
-	effect.global_position = _target.global_position if (_target and is_instance_valid(_target)) else global_position
+	var effect_position: Vector2 = _target.global_position if (_target and is_instance_valid(_target)) else global_position
+	effect.global_position = effect_position + HIT_EFFECT_OFFSET
 	effect.scale = Vector2.ONE * _get_hit_effect_scale()
 	effect.z_index = 5
 	var root: Node = get_tree().current_scene

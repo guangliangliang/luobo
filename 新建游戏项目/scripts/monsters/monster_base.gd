@@ -7,6 +7,7 @@ const WOLF_SHEET: Texture2D = preload("res://assets/monsters/wolf/wolf_sheet.png
 const DEATH_SMOKE_SHEET: Texture2D = preload("res://assets/effects/新建文件夹/death_smoke_sheet.png")
 const WOLF_FRAME_COUNT: int = 4
 const WOLF_FRAME_SIZE: Vector2 = Vector2(640, 1440)
+const DEATH_EFFECT_OFFSET := Vector2(0, -18)
 
 static var _death_smoke_frames_cache: SpriteFrames = null
 static var _walk_frames_cache: Dictionary = {}
@@ -173,7 +174,7 @@ func _spawn_death_smoke() -> void:
 	var effect: AnimatedSprite2D = AnimatedSprite2D.new()
 	effect.sprite_frames = _get_death_smoke_frames()
 	effect.animation = "smoke"
-	effect.global_position = global_position
+	effect.global_position = global_position + DEATH_EFFECT_OFFSET
 	effect.scale = Vector2.ONE * 0.1
 	effect.z_index = 5
 	var root: Node = get_tree().current_scene
