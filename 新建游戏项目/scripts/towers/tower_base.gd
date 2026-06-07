@@ -4,9 +4,10 @@ signal tower_selected(tower: Node2D)
 
 const PROJECTILE_SCRIPT: GDScript = preload("res://scripts/towers/projectile.gd")
 const BUILD_SPOT_TEXTURE: Texture2D = preload("res://assets/maps/build_spots/build_spot_base.png")
-const GOLD_ICON: Texture2D = preload("res://assets/ui/icons/icon_gold.png")
 const BUILD_SPOT_REGION := Rect2(204, 92, 1645, 981)
 const TOWER_SPRITE_BASELINE_Y := 20.0
+const UPGRADE_HINT_SIZE := Vector2(20, 24)
+const UPGRADE_HINT_TOP_GAP := 6.0
 const INITIAL_ATTACK_STAGGER_MAX := 0.35
 const ATTACK_TIMER_JITTER := 0.04
 const NO_TARGET_SCAN_INTERVAL_MIN := 0.12
@@ -27,9 +28,7 @@ var _spawner: Node = null
 var _sprite: Sprite2D = null
 var _base_sprite: Sprite2D = null
 var _upgrade_icon: Node2D = null
-var _upgrade_badge: PanelContainer = null
-var _upgrade_cost_label: Label = null
-var _upgrade_last_cost: int = -1
+var _upgrade_label: Label = null
 var _entrance_points: PackedVector2Array = []
 var _attack_range_squared: float = 0.0
 
@@ -296,6 +295,7 @@ func _update_sprite_texture() -> void:
 	_sprite.scale = Vector2.ONE * scale_factor
 	_sprite.position = Vector2(0, -texture.get_height() * scale_factor * 0.5 + TOWER_SPRITE_BASELINE_Y)
 	_sprite.visible = true
+	_update_upgrade_icon_position()
 
 func _get_tower_texture(texture_path: String) -> Texture2D:
 	if not _tower_texture_cache.has(texture_path):
@@ -332,10 +332,19 @@ func is_click_in_area(click_pos: Vector2) -> bool:
 func _setup_upgrade_icon() -> void:
 	_upgrade_icon = Node2D.new()
 	_upgrade_icon.name = "UpgradeIcon"
-	_upgrade_icon.position = Vector2(-44, -92)
+	_update_upgrade_icon_position()
 	_upgrade_icon.z_index = 30
 	add_child(_upgrade_icon)
 	_update_upgrade_icon()
+
+func _update_upgrade_icon_position() -> void:
+	if not _upgrade_icon:
+		return
+	var tower_top_y: float = TOWER_SPRITE_BASELINE_Y - _get_tower_target_height()
+	_upgrade_icon.position = Vector2(
+		-UPGRADE_HINT_SIZE.x * 0.5,
+		tower_top_y - UPGRADE_HINT_SIZE.y - UPGRADE_HINT_TOP_GAP
+	)
 
 func _update_upgrade_icon() -> void:
 	if not _upgrade_icon:
@@ -345,135 +354,24 @@ func _update_upgrade_icon() -> void:
 	if not should_show:
 		_upgrade_icon.visible = false
 		return
-	_ensure_upgrade_badge()
+	_ensure_upgrade_hint()
 	_upgrade_icon.visible = true
-	if _upgrade_cost_label and _upgrade_last_cost != upgrade_cost:
-		_upgrade_cost_label.text = "%d" % upgrade_cost
-		_upgrade_last_cost = upgrade_cost
-	return
-	for child in _upgrade_icon.get_children():
-		_upgrade_icon.remove_child(child)
-		child.queue_free()
-	if not can_upgrade():
+
+func _ensure_upgrade_hint() -> void:
+	if _upgrade_label:
 		return
-	var cost: int = get_upgrade_cost()
-	if GameManager.current_gold < cost:
-		return
-
-	var badge: PanelContainer = PanelContainer.new()
-	badge.size = Vector2(88, 30)
-	badge.custom_minimum_size = Vector2(88, 30)
-	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	badge.add_theme_stylebox_override("panel", _create_upgrade_badge_stylebox())
-	_upgrade_icon.add_child(badge)
-
-	var margin: MarginContainer = MarginContainer.new()
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 7)
-	margin.add_theme_constant_override("margin_top", 3)
-	margin.add_theme_constant_override("margin_right", 7)
-	margin.add_theme_constant_override("margin_bottom", 3)
-	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	badge.add_child(margin)
-
-	var row: HBoxContainer = HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 4)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_child(row)
-
-	var arrow_label: Label = Label.new()
-	arrow_label.text = "↑"
-	arrow_label.add_theme_font_size_override("font_size", 18)
-	arrow_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.25))
-	arrow_label.add_theme_color_override("font_outline_color", Color(0.08, 0.05, 0.02))
-	arrow_label.add_theme_constant_override("outline_size", 2)
-	arrow_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(arrow_label)
-
-	var gold_icon: TextureRect = TextureRect.new()
-	gold_icon.custom_minimum_size = Vector2(16, 16)
-	gold_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	gold_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	gold_icon.texture = GOLD_ICON
-	gold_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(gold_icon)
-
-	var cost_label: Label = Label.new()
-	cost_label.text = "%d" % cost
-	cost_label.add_theme_font_size_override("font_size", 14)
-	cost_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.25))
-	cost_label.add_theme_color_override("font_outline_color", Color(0.08, 0.05, 0.02))
-	cost_label.add_theme_constant_override("outline_size", 2)
-	cost_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(cost_label)
-
-func _create_upgrade_badge_stylebox() -> StyleBoxFlat:
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.10, 0.08, 0.04, 0.92)
-	style.corner_radius_top_left = 8
-	style.corner_radius_top_right = 8
-	style.corner_radius_bottom_left = 8
-	style.corner_radius_bottom_right = 8
-	style.border_width_left = 1
-	style.border_width_top = 1
-	style.border_width_right = 1
-	style.border_width_bottom = 1
-	style.border_color = Color(1.0, 0.72, 0.22)
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.36)
-	style.shadow_size = 5
-	style.shadow_offset = Vector2(0, 2)
-	return style
-
-func _ensure_upgrade_badge() -> void:
-	if _upgrade_badge:
-		return
-	_upgrade_badge = PanelContainer.new()
-	_upgrade_badge.size = Vector2(88, 30)
-	_upgrade_badge.custom_minimum_size = Vector2(88, 30)
-	_upgrade_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_upgrade_badge.add_theme_stylebox_override("panel", _create_upgrade_badge_stylebox())
-	_upgrade_icon.add_child(_upgrade_badge)
-
-	var margin := MarginContainer.new()
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 7)
-	margin.add_theme_constant_override("margin_top", 3)
-	margin.add_theme_constant_override("margin_right", 7)
-	margin.add_theme_constant_override("margin_bottom", 3)
-	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_upgrade_badge.add_child(margin)
-
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 4)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_child(row)
-
-	var arrow_label := Label.new()
-	arrow_label.text = "^"
-	arrow_label.add_theme_font_size_override("font_size", 18)
-	arrow_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.25))
-	arrow_label.add_theme_color_override("font_outline_color", Color(0.08, 0.05, 0.02))
-	arrow_label.add_theme_constant_override("outline_size", 2)
-	arrow_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(arrow_label)
-
-	var gold_icon := TextureRect.new()
-	gold_icon.custom_minimum_size = Vector2(16, 16)
-	gold_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	gold_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	gold_icon.texture = GOLD_ICON
-	gold_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(gold_icon)
-
-	_upgrade_cost_label = Label.new()
-	_upgrade_cost_label.add_theme_font_size_override("font_size", 14)
-	_upgrade_cost_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.25))
-	_upgrade_cost_label.add_theme_color_override("font_outline_color", Color(0.08, 0.05, 0.02))
-	_upgrade_cost_label.add_theme_constant_override("outline_size", 2)
-	_upgrade_cost_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(_upgrade_cost_label)
+	_upgrade_label = Label.new()
+	_upgrade_label.text = "↑"
+	_upgrade_label.size = UPGRADE_HINT_SIZE
+	_upgrade_label.custom_minimum_size = UPGRADE_HINT_SIZE
+	_upgrade_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_upgrade_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_upgrade_label.add_theme_font_size_override("font_size", 22)
+	_upgrade_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.25))
+	_upgrade_label.add_theme_color_override("font_outline_color", Color(0.08, 0.05, 0.02))
+	_upgrade_label.add_theme_constant_override("outline_size", 2)
+	_upgrade_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_upgrade_icon.add_child(_upgrade_label)
 
 func _on_gold_changed(_new_gold: int) -> void:
 	_update_upgrade_icon()

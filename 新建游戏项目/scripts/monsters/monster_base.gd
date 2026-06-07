@@ -9,6 +9,7 @@ const DEATH_EFFECT_OFFSET := Vector2(0, -18)
 const MAX_DEATH_SMOKE_EFFECTS := 2
 const DEATH_SMOKE_LIFETIME := 0.7
 const SHOW_GOLD_POPUPS := false
+const VISUAL_OFFSET := Vector2(0, -8)
 
 static var _death_smoke_frames_cache: SpriteFrames = null
 static var _walk_frames_cache: Dictionary = {}
@@ -50,6 +51,7 @@ func _setup_sprite() -> void:
 	var first_frame: Texture2D = frames.get_frame_texture("walk", 0)
 	var max_size: float = _get_visible_frame_max_size(data.monster_type, first_frame)
 	sprite.scale = Vector2.ONE * (_get_sprite_target_size(data.monster_type) / max_size)
+	sprite.position = VISUAL_OFFSET
 	sprite.play("walk")
 
 static func prewarm_monster_types(monster_types: Array) -> void:
@@ -321,15 +323,15 @@ func _draw() -> void:
 		_draw_slow_trails(uses_sprite)
 
 	if not uses_sprite:
-		draw_circle(Vector2.ZERO, data.body_radius, data.body_color)
+		draw_circle(VISUAL_OFFSET, data.body_radius, data.body_color)
 
 	var health_pct: float = float(current_health) / float(max_health)
 	var bar_width: float = data.body_radius * 2.0
 	var bar_height: float = 4.0
-	var bar_y: float = -data.body_radius - 10.0
+	var bar_y: float = VISUAL_OFFSET.y - data.body_radius - 10.0
 	if uses_sprite:
 		bar_width = _get_sprite_target_size(data.monster_type) * 0.8
-		bar_y = -_get_sprite_target_size(data.monster_type) * 0.65
+		bar_y = VISUAL_OFFSET.y - _get_sprite_target_size(data.monster_type) * 0.65
 	draw_rect(Rect2(-bar_width / 2.0, bar_y, bar_width, bar_height), Color.RED)
 	draw_rect(Rect2(-bar_width / 2.0, bar_y, bar_width * health_pct, bar_height), Color.GREEN)
 
@@ -343,7 +345,7 @@ func _draw_slow_trails(uses_sprite: bool) -> void:
 	var trail_alpha: float = clampf(0.35 + slow_timer * 0.12, 0.35, 0.75)
 	var trail_color := Color(1.0, 0.84, 0.18, trail_alpha)
 	var shadow_color := Color(0.35, 0.22, 0.02, trail_alpha * 0.45)
-	var base_y: float = body_size * 0.32
+	var base_y: float = VISUAL_OFFSET.y + body_size * 0.32
 	var point_a := Vector2(-body_size * 0.46, base_y)
 	var point_b := Vector2(-body_size * 0.30, base_y - 4.0)
 

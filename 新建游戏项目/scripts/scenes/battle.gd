@@ -312,6 +312,7 @@ func _on_pause_pressed() -> void:
 func _on_settings_pressed() -> void:
 	if not _is_paused:
 		_toggle_pause()
+	_close_context_menus()
 	_settings_dialog.show_dialog(_is_paused)
 
 func _on_exit_level() -> void:
@@ -408,8 +409,11 @@ func _on_upgrade_tower() -> void:
 		_suppress_tower_menu_gold_update = true
 		tower.upgrade()
 		_suppress_tower_menu_gold_update = false
-		_tower_menu.hide_menu()
-		_hide_tower_range()
+		if tower.can_upgrade() and GameManager.current_gold >= tower.get_upgrade_cost():
+			_tower_menu._update_info()
+		else:
+			_tower_menu.hide_menu()
+			_hide_tower_range()
 	_update_hud()
 
 func _on_sell_tower() -> void:
@@ -431,6 +435,14 @@ func _on_sell_tower() -> void:
 func _on_cancel_tower_menu() -> void:
 	_hide_tower_range()
 	_tower_menu.hide_menu()
+
+func _close_context_menus() -> void:
+	if _build_menu and _build_menu.visible:
+		_build_menu.hide_menu()
+	_selected_build_position = Vector2.ZERO
+	if _tower_menu and _tower_menu.visible:
+		_tower_menu.hide_menu()
+	_hide_tower_range()
 
 func _on_gold_changed(_new_gold: int) -> void:
 	if _tower_menu and _tower_menu.visible and not _suppress_tower_menu_gold_update:
@@ -463,6 +475,9 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventScreenTouch and event.pressed:
 		click_pos = (event as InputEventScreenTouch).position
 	else:
+		return
+
+	if _is_blocking_dialog_open():
 		return
 
 	if _build_menu and _build_menu.visible:
@@ -500,6 +515,9 @@ func _input(event: InputEvent) -> void:
 	if _build_mgr.can_build_at_position(click_pos):
 		_selected_build_position = click_pos
 		_build_menu.show_at(click_pos)
+
+func _is_blocking_dialog_open() -> bool:
+	return (_settings_dialog and _settings_dialog.visible) or (_level_info_dialog and _level_info_dialog.visible)
 
 func _hide_tower_range() -> void:
 	if _selected_tower and is_instance_valid(_selected_tower):
