@@ -5,7 +5,7 @@
 
 [sub_resource type="Resource" id="WaveData_wave1"]
 script = ExtResource("2_script")
-monster_type = "wolf"
+monster_type = "wild_wolf"
 count = 12
 spawn_interval = 0.68
 path_index = 0
@@ -13,7 +13,7 @@ is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave2"]
 script = ExtResource("2_script")
-monster_type = "wolf"
+monster_type = "wild_wolf"
 count = 16
 spawn_interval = 0.58
 path_index = 0
@@ -21,15 +21,15 @@ is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave3"]
 script = ExtResource("2_script")
-monster_type = "bandit"
-count = 6
-spawn_interval = 0.8
+monster_type = "thief"
+count = 8
+spawn_interval = 0.55
 path_index = 0
 is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave4"]
 script = ExtResource("2_script")
-monster_type = "wolf"
+monster_type = "robber"
 count = 22
 spawn_interval = 0.48
 path_index = 0
@@ -37,12 +37,12 @@ is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave5"]
 script = ExtResource("2_script")
-monster_type = "bear"
+monster_type = "boar"
 count = 2
 spawn_interval = 1.6
 path_index = 0
 is_boss = true
-support_monster_type = "wolf"
+support_monster_type = "wild_wolf"
 support_count = 8
 support_spawn_interval = 0.48
 

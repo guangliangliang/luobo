@@ -4,7 +4,21 @@ const BACKGROUND_TEXTURE: Texture2D = preload("res://assets/maps/background/gras
 const BUILD_SPOT_TEXTURE: Texture2D = preload("res://assets/maps/build_spots/build_spot_base.png")
 const VILLAGE_TEXTURE: Texture2D = preload("res://assets/maps/village/village_core.png")
 const HEALTH_ICON: Texture2D = preload("res://assets/ui/icons/icon_health.png")
+const MONSTER_SCRIPT: GDScript = preload("res://scripts/monsters/monster_base.gd")
+const TOWER_SCRIPT: GDScript = preload("res://scripts/towers/tower_base.gd")
+const PROJECTILE_SCRIPT: GDScript = preload("res://scripts/towers/projectile.gd")
+const MONSTER_SPAWNER_SCRIPT: GDScript = preload("res://scripts/monsters/monster_spawner.gd")
+const WAVE_MANAGER_SCRIPT: GDScript = preload("res://scripts/battle/wave_manager.gd")
+const BUILD_MANAGER_SCRIPT: GDScript = preload("res://scripts/battle/build_manager.gd")
+const BATTLE_MANAGER_SCRIPT: GDScript = preload("res://scripts/battle/battle_manager.gd")
+const HUD_SCRIPT: GDScript = preload("res://scripts/ui/hud.gd")
+const BUILD_MENU_SCRIPT: GDScript = preload("res://scripts/ui/build_menu.gd")
+const TOWER_MENU_SCRIPT: GDScript = preload("res://scripts/ui/tower_menu.gd")
+const SETTINGS_DIALOG_SCRIPT: GDScript = preload("res://scripts/ui/settings_dialog.gd")
+const LEVEL_INFO_DIALOG_SCRIPT: GDScript = preload("res://scripts/ui/level_info_dialog.gd")
 const BUILD_SPOT_REGION := Rect2(204, 92, 1645, 981)
+const START_COUNTDOWN_SECONDS := 3
+const START_MESSAGE_DURATION := 0.2
 
 var _level_data: LevelData
 var _spawner: Node
@@ -25,6 +39,7 @@ var _selected_tower: Node2D = null
 var _is_paused: bool = false
 var _game_started: bool = false
 var _level_info_dialog: Control
+var _suppress_tower_menu_gold_update: bool = false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -32,9 +47,22 @@ func _ready() -> void:
 	_level_data = GameManager.get_level_data(GameManager.current_level_id)
 	if not _level_data:
 		return
+	MONSTER_SCRIPT.prewarm_monster_types(_get_level_monster_types())
+	MONSTER_SCRIPT.prewarm_combat_effects()
+	TOWER_SCRIPT.prewarm_tower_textures()
+	PROJECTILE_SCRIPT.prewarm_projectile_assets()
 	_create_battle_scene()
 	GameManager.start_battle(GameManager.current_level_id)
 	_start_countdown()
+
+func _get_level_monster_types() -> Array:
+	var monster_types: Array = []
+	for wave: WaveData in _level_data.waves:
+		if not wave.monster_type.is_empty() and not monster_types.has(wave.monster_type):
+			monster_types.append(wave.monster_type)
+		if not wave.support_monster_type.is_empty() and not monster_types.has(wave.support_monster_type):
+			monster_types.append(wave.support_monster_type)
+	return monster_types
 
 func _create_battle_scene() -> void:
 	_create_managers()
@@ -51,7 +79,6 @@ func _create_map() -> void:
 	_draw_paths()
 	_draw_build_spots()
 	_draw_village()
-	_draw_entrances()
 
 func _draw_background() -> void:
 	var bg_sprite: Sprite2D = Sprite2D.new()
@@ -164,16 +191,6 @@ func _update_village_health_marker() -> void:
 	var max_health: int = maxi(GameManager.max_village_health, GameManager.village_health)
 	_village_health_label.text = "%d/%d" % [GameManager.village_health, max_health]
 
-func _draw_entrances() -> void:
-	for path_points: PackedVector2Array in _level_data.path_points:
-		if path_points.size() > 0:
-			var entrance: Label = Label.new()
-			entrance.text = "入口"
-			entrance.position = path_points[0] + Vector2(-15, -30)
-			entrance.add_theme_font_size_override("font_size", 14)
-			entrance.add_theme_color_override("font_color", Color(1, 0.6, 0.6))
-			_map_drawer.add_child(entrance)
-
 func _draw_build_spots() -> void:
 	_build_spot_sprites.clear()
 	var spot_texture: AtlasTexture = _make_atlas_texture(BUILD_SPOT_TEXTURE, BUILD_SPOT_REGION)
@@ -194,35 +211,31 @@ func _make_atlas_texture(texture: Texture2D, region: Rect2) -> AtlasTexture:
 	return atlas
 
 func _create_managers() -> void:
-	var spawner_script: GDScript = load("res://scripts/monsters/monster_spawner.gd")
 	_spawner = Node2D.new()
 	_spawner.name = "MonsterSpawner"
 	_spawner.process_mode = Node.PROCESS_MODE_PAUSABLE
-	_spawner.set_script(spawner_script)
+	_spawner.set_script(MONSTER_SPAWNER_SCRIPT)
 	_spawner.setup(_level_data)
 	add_child(_spawner)
 	
-	var wave_script: GDScript = load("res://scripts/battle/wave_manager.gd")
 	_wave_mgr = Node2D.new()
 	_wave_mgr.name = "WaveManager"
 	_wave_mgr.process_mode = Node.PROCESS_MODE_PAUSABLE
-	_wave_mgr.set_script(wave_script)
+	_wave_mgr.set_script(WAVE_MANAGER_SCRIPT)
 	_wave_mgr.setup(_level_data)
 	add_child(_wave_mgr)
 	
-	var build_script: GDScript = load("res://scripts/battle/build_manager.gd")
 	_build_mgr = Node2D.new()
 	_build_mgr.name = "BuildManager"
 	_build_mgr.process_mode = Node.PROCESS_MODE_PAUSABLE
-	_build_mgr.set_script(build_script)
+	_build_mgr.set_script(BUILD_MANAGER_SCRIPT)
 	_build_mgr.setup(_level_data)
 	add_child(_build_mgr)
 	
-	var battle_script: GDScript = load("res://scripts/battle/battle_manager.gd")
 	_battle_mgr = Node2D.new()
 	_battle_mgr.name = "BattleManager"
 	_battle_mgr.process_mode = Node.PROCESS_MODE_PAUSABLE
-	_battle_mgr.set_script(battle_script)
+	_battle_mgr.set_script(BATTLE_MANAGER_SCRIPT)
 	_battle_mgr.setup(_level_data, _spawner, _wave_mgr, _build_mgr)
 	add_child(_battle_mgr)
 
@@ -232,30 +245,26 @@ func _create_ui() -> void:
 	canvas.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(canvas)
 	
-	var hud_script: GDScript = load("res://scripts/ui/hud.gd")
 	_hud = Control.new()
 	_hud.name = "HUD"
-	_hud.set_script(hud_script)
+	_hud.set_script(HUD_SCRIPT)
 	canvas.add_child(_hud)
 	
-	var build_menu_script: GDScript = load("res://scripts/ui/build_menu.gd")
 	_build_menu = Control.new()
 	_build_menu.name = "BuildMenu"
-	_build_menu.set_script(build_menu_script)
+	_build_menu.set_script(BUILD_MENU_SCRIPT)
 	canvas.add_child(_build_menu)
 	_build_menu.visible = false
 	
-	var tower_menu_script: GDScript = load("res://scripts/ui/tower_menu.gd")
 	_tower_menu = Control.new()
 	_tower_menu.name = "TowerMenu"
-	_tower_menu.set_script(tower_menu_script)
+	_tower_menu.set_script(TOWER_MENU_SCRIPT)
 	canvas.add_child(_tower_menu)
 	_tower_menu.visible = false
 	
-	var settings_dialog_script: GDScript = load("res://scripts/ui/settings_dialog.gd")
 	_settings_dialog = Control.new()
 	_settings_dialog.name = "SettingsDialog"
-	_settings_dialog.set_script(settings_dialog_script)
+	_settings_dialog.set_script(SETTINGS_DIALOG_SCRIPT)
 	canvas.add_child(_settings_dialog)
 	_settings_dialog.visible = false
 	
@@ -271,10 +280,9 @@ func _create_ui() -> void:
 	canvas.add_child(_countdown_label)
 	_countdown_label.visible = false
 	
-	var level_info_script: GDScript = load("res://scripts/ui/level_info_dialog.gd")
 	_level_info_dialog = Control.new()
 	_level_info_dialog.name = "LevelInfoDialog"
-	_level_info_dialog.set_script(level_info_script)
+	_level_info_dialog.set_script(LEVEL_INFO_DIALOG_SCRIPT)
 	canvas.add_child(_level_info_dialog)
 	_level_info_dialog.visible = false
 
@@ -340,7 +348,7 @@ var _countdown_count: int = 3
 
 func _start_countdown() -> void:
 	_countdown_label.visible = true
-	_countdown_count = 3
+	_countdown_count = START_COUNTDOWN_SECONDS
 	_countdown_label.text = str(_countdown_count)
 	
 	_countdown_timer = Timer.new()
@@ -360,7 +368,7 @@ func _on_countdown_tick() -> void:
 		_countdown_timer.stop()
 		_countdown_timer.queue_free()
 		_countdown_timer = null
-		await get_tree().create_timer(0.5).timeout
+		await get_tree().create_timer(START_MESSAGE_DURATION).timeout
 		_countdown_label.visible = false
 		_auto_start_first_wave()
 
@@ -397,8 +405,11 @@ func _on_cancel_build() -> void:
 func _on_upgrade_tower() -> void:
 	var tower: Node2D = _tower_menu.get_tower()
 	if tower and is_instance_valid(tower):
+		_suppress_tower_menu_gold_update = true
 		tower.upgrade()
-		_tower_menu._update_info()
+		_suppress_tower_menu_gold_update = false
+		_tower_menu.hide_menu()
+		_hide_tower_range()
 	_update_hud()
 
 func _on_sell_tower() -> void:
@@ -422,7 +433,7 @@ func _on_cancel_tower_menu() -> void:
 	_tower_menu.hide_menu()
 
 func _on_gold_changed(_new_gold: int) -> void:
-	if _tower_menu and _tower_menu.visible:
+	if _tower_menu and _tower_menu.visible and not _suppress_tower_menu_gold_update:
 		_tower_menu._update_info()
 	if _build_menu and _build_menu.visible:
 		_build_menu._update_button_states()

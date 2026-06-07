@@ -5,7 +5,7 @@
 
 [sub_resource type="Resource" id="WaveData_wave1"]
 script = ExtResource("2_script")
-monster_type = "wolf"
+monster_type = "wild_wolf"
 count = 26
 spawn_interval = 0.42
 path_index = 0
@@ -13,7 +13,7 @@ is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave2"]
 script = ExtResource("2_script")
-monster_type = "bandit"
+monster_type = "mountain_bandit"
 count = 12
 spawn_interval = 0.58
 path_index = 0
@@ -21,7 +21,7 @@ is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave3"]
 script = ExtResource("2_script")
-monster_type = "wolf"
+monster_type = "thief"
 count = 34
 spawn_interval = 0.32
 path_index = 0
@@ -29,18 +29,18 @@ is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave4"]
 script = ExtResource("2_script")
-monster_type = "bear"
+monster_type = "brown_bear"
 count = 2
 spawn_interval = 1.2
 path_index = 0
 is_boss = false
-support_monster_type = "wolf"
+support_monster_type = "robber"
 support_count = 16
 support_spawn_interval = 0.38
 
 [sub_resource type="Resource" id="WaveData_wave5"]
 script = ExtResource("2_script")
-monster_type = "bandit"
+monster_type = "shield_bandit"
 count = 24
 spawn_interval = 0.42
 path_index = 0
@@ -48,7 +48,7 @@ is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave6"]
 script = ExtResource("2_script")
-monster_type = "wolf"
+monster_type = "boar"
 count = 42
 spawn_interval = 0.28
 path_index = 0
@@ -56,23 +56,23 @@ is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave7"]
 script = ExtResource("2_script")
-monster_type = "bear"
+monster_type = "tiger"
 count = 4
 spawn_interval = 1.1
 path_index = 0
 is_boss = true
-support_monster_type = "bandit"
+support_monster_type = "mountain_bandit"
 support_count = 12
 support_spawn_interval = 0.44
 
 [sub_resource type="Resource" id="WaveData_wave8"]
 script = ExtResource("2_script")
-monster_type = "bear"
+monster_type = "black_bear"
 count = 2
 spawn_interval = 0.9
 path_index = 0
 is_boss = true
-support_monster_type = "wolf"
+support_monster_type = "wild_wolf"
 support_count = 24
 support_spawn_interval = 0.32
 

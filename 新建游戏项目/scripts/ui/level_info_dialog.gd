@@ -270,7 +270,8 @@ func _create_enemy_card(data: MonsterData) -> Control:
 	var title: Label = _make_title_label("%s  |  击败奖励 %d 金币" % [_monster_name(data.monster_type), data.reward])
 	vbox.add_child(title)
 
-	var stats: Label = _make_body_label("生命: %d    速度: %d    体型: %d" % [
+	var stats: Label = _make_body_label("分类: %s    生命: %d    速度: %d    体型: %d" % [
+		data.monster_category if data.monster_category != "" else "普通",
 		data.max_health,
 		int(data.move_speed),
 		int(data.body_radius)
@@ -428,15 +429,14 @@ func _tower_image_path(tower_type: String, level_index: int = 0) -> String:
 			return ""
 
 func _monster_image_path(monster_type: String) -> String:
-	match monster_type:
-		"wolf":
-			return "res://assets/monsters/wolf/wolf_walk_01.png"
-		"bandit":
-			return "res://assets/monsters/bandit/bandit_walk_01.png"
-		"bear":
-			return "res://assets/monsters/bear/bear_walk_01.png"
-		_:
-			return ""
+	var icon_path: String = "res://assets/monsters/%s/%s_icon.png" % [monster_type, monster_type]
+	if ResourceLoader.exists(icon_path):
+		return icon_path
+
+	var sheet_path: String = "res://assets/monsters/%s/%s_sheet.png" % [monster_type, monster_type]
+	if ResourceLoader.exists(sheet_path):
+		return sheet_path
+	return ""
 
 func _tower_name(tower_type: String) -> String:
 	match tower_type:
@@ -461,30 +461,33 @@ func _tower_description(data: TowerData) -> String:
 			return "可建造防御单位。"
 
 func _monster_name(monster_type: String) -> String:
-	match monster_type:
-		"wolf":
-			return "野狼"
-		"bandit":
-			return "强盗"
-		"bear":
-			return "大熊"
-		"goblin":
-			return "哥布林"
-		"berserker_goblin":
-			return "狂暴哥布林"
-		"boss":
-			return "首领"
-		_:
-			return monster_type
+	var data: MonsterData = GameManager.get_monster_data(monster_type)
+	if data and data.monster_name != "":
+		return data.monster_name
+	return monster_type
 
 func _monster_description(data: MonsterData) -> String:
 	match data.monster_type:
-		"wolf":
-			return "基础敌人，生命较低但数量多，适合用箭塔快速处理。"
-		"bandit":
-			return "移动速度快，容易穿过火力空档，建议用冰冻塔减速后集中输出。"
-		"bear":
-			return "生命值很高，是关卡中的重型敌人，需要炮塔和升级后的箭塔持续压制。"
+		"wild_wolf":
+			return "速度较快、生命较低，常以数量压迫防线，适合用箭塔快速清理。"
+		"thief":
+			return "移动速度最快，生命值低，容易钻过火力空档，适合用冰冻塔减速。"
+		"robber":
+			return "轻装人形敌人，速度快于普通山贼，适合穿插在兽群后制造压力。"
+		"boar":
+			return "冲锋型野兽，生命和速度都较均衡，容易顶住前期火力。"
+		"mountain_bandit":
+			return "山路强袭单位，生命比劫匪更高，适合作为中段主力。"
+		"shield_bandit":
+			return "重甲单位，速度慢但抗打，适合用炮塔和升级箭塔持续压制。"
+		"brown_bear":
+			return "重型野兽，生命高、速度偏慢，能拖住防线输出节奏。"
+		"black_bear":
+			return "更耐打的重型野兽，适合在后期和快速单位混合出场。"
+		"tiger":
+			return "精英野兽，速度快且生命不低，需要减速和集中火力处理。"
+		"bandit_leader":
+			return "首领单位，生命很高，会带着山贼和盾牌强盗一起冲击防线。"
 		_:
 			return "敌方单位，会沿道路向村庄前进。"
 

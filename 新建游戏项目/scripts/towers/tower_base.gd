@@ -6,6 +6,11 @@ const PROJECTILE_SCRIPT: GDScript = preload("res://scripts/towers/projectile.gd"
 const BUILD_SPOT_TEXTURE: Texture2D = preload("res://assets/maps/build_spots/build_spot_base.png")
 const GOLD_ICON: Texture2D = preload("res://assets/ui/icons/icon_gold.png")
 const BUILD_SPOT_REGION := Rect2(204, 92, 1645, 981)
+const TOWER_SPRITE_BASELINE_Y := 20.0
+const INITIAL_ATTACK_STAGGER_MAX := 0.35
+const ATTACK_TIMER_JITTER := 0.04
+const NO_TARGET_SCAN_INTERVAL_MIN := 0.12
+const NO_TARGET_SCAN_INTERVAL_MAX := 0.22
 
 static var _tower_texture_cache: Dictionary = {}
 
@@ -22,13 +27,24 @@ var _spawner: Node = null
 var _sprite: Sprite2D = null
 var _base_sprite: Sprite2D = null
 var _upgrade_icon: Node2D = null
+var _upgrade_badge: PanelContainer = null
+var _upgrade_cost_label: Label = null
+var _upgrade_last_cost: int = -1
 var _entrance_points: PackedVector2Array = []
+var _attack_range_squared: float = 0.0
+
+static func prewarm_tower_textures() -> void:
+	for type: String in ["arrow", "cannon", "ice"]:
+		for level: int in range(1, 4):
+			var texture_path: String = _get_tower_texture_path_for(type, level)
+			if not texture_path.is_empty() and not _tower_texture_cache.has(texture_path):
+				_tower_texture_cache[texture_path] = load(texture_path) as Texture2D
 
 func setup(type: String, data: TowerData) -> void:
 	tower_type = type
 	tower_data = data
 	_total_invested = data.cost
-	_attack_timer = 0.0
+	_attack_timer = _get_initial_attack_delay()
 	_battle_root = get_tree().current_scene if is_inside_tree() else null
 	_spawner = _find_spawner()
 	_setup_base_sprite()
@@ -109,6 +125,7 @@ func _calculate_range_circle() -> void:
 	_range_circle_points.clear()
 	var segments: int = 48
 	var r: float = get_attack_range()
+	_attack_range_squared = r * r
 	for i in range(segments + 1):
 		var angle: float = TAU * float(i) / float(segments)
 		_range_circle_points.append(Vector2(cos(angle), sin(angle)) * r)
@@ -122,9 +139,9 @@ func _process(delta: float) -> void:
 		_find_target()
 		if _target and is_instance_valid(_target):
 			_shoot()
-			_attack_timer = get_attack_interval()
+			_attack_timer = _get_next_attack_delay()
 		else:
-			_attack_timer = 0.1
+			_attack_timer = randf_range(NO_TARGET_SCAN_INTERVAL_MIN, NO_TARGET_SCAN_INTERVAL_MAX)
 
 func _find_target() -> void:
 	_target = null
@@ -133,7 +150,10 @@ func _find_target() -> void:
 		return
 	var monsters: Array = spawner.get_all_monsters()
 	var best_progress: float = -1.0
-	var range_squared: float = get_attack_range() * get_attack_range()
+	var range_squared: float = _attack_range_squared
+	if range_squared <= 0.0:
+		var attack_range: float = get_attack_range()
+		range_squared = attack_range * attack_range
 	
 	for monster in monsters:
 		if not is_instance_valid(monster) or monster.is_dead:
@@ -143,6 +163,12 @@ func _find_target() -> void:
 			if monster.progress_ratio > best_progress:
 				best_progress = monster.progress_ratio
 				_target = monster
+
+func _get_initial_attack_delay() -> float:
+	return randf_range(0.0, minf(get_attack_interval(), INITIAL_ATTACK_STAGGER_MAX))
+
+func _get_next_attack_delay() -> float:
+	return maxf(0.05, get_attack_interval() + randf_range(-ATTACK_TIMER_JITTER, ATTACK_TIMER_JITTER))
 
 func _find_spawner() -> Node:
 	if _spawner and is_instance_valid(_spawner):
@@ -158,7 +184,7 @@ func _shoot() -> void:
 	
 	var projectile_start: Vector2 = _get_projectile_start_position()
 	_aim_sprite_from_position(_target.global_position, projectile_start)
-	var projectile: CharacterBody2D = CharacterBody2D.new()
+	var projectile: Node2D = Node2D.new()
 	projectile.process_mode = Node.PROCESS_MODE_PAUSABLE
 	projectile.set_script(PROJECTILE_SCRIPT)
 	projectile.setup(
@@ -268,7 +294,7 @@ func _update_sprite_texture() -> void:
 	var scale_factor: float = target_height / float(texture.get_height())
 	_sprite.texture = texture
 	_sprite.scale = Vector2.ONE * scale_factor
-	_sprite.position = Vector2(0, -texture.get_height() * scale_factor * 0.5 + 8.0)
+	_sprite.position = Vector2(0, -texture.get_height() * scale_factor * 0.5 + TOWER_SPRITE_BASELINE_Y)
 	_sprite.visible = true
 
 func _get_tower_texture(texture_path: String) -> Texture2D:
@@ -277,13 +303,16 @@ func _get_tower_texture(texture_path: String) -> Texture2D:
 	return _tower_texture_cache[texture_path]
 
 func _get_tower_texture_path() -> String:
-	match tower_type:
+	return _get_tower_texture_path_for(tower_type, tower_level)
+
+static func _get_tower_texture_path_for(type: String, level: int) -> String:
+	match type:
 		"arrow":
-			return "res://assets/towers/tower_lv%d_transparent.png" % tower_level
+			return "res://assets/towers/tower_lv%d_transparent.png" % level
 		"cannon":
-			return "res://assets/towers/cannon_tower_lv%d_transparent.png" % tower_level
+			return "res://assets/towers/cannon_tower_lv%d_transparent.png" % level
 		"ice":
-			return "res://assets/towers/ice_tower_lv%d.png_transparent.png" % tower_level
+			return "res://assets/towers/ice_tower_lv%d.png_transparent.png" % level
 		_:
 			return ""
 
@@ -311,6 +340,17 @@ func _setup_upgrade_icon() -> void:
 func _update_upgrade_icon() -> void:
 	if not _upgrade_icon:
 		return
+	var upgrade_cost: int = get_upgrade_cost()
+	var should_show := can_upgrade() and GameManager.current_gold >= upgrade_cost
+	if not should_show:
+		_upgrade_icon.visible = false
+		return
+	_ensure_upgrade_badge()
+	_upgrade_icon.visible = true
+	if _upgrade_cost_label and _upgrade_last_cost != upgrade_cost:
+		_upgrade_cost_label.text = "%d" % upgrade_cost
+		_upgrade_last_cost = upgrade_cost
+	return
 	for child in _upgrade_icon.get_children():
 		_upgrade_icon.remove_child(child)
 		child.queue_free()
@@ -384,6 +424,56 @@ func _create_upgrade_badge_stylebox() -> StyleBoxFlat:
 	style.shadow_size = 5
 	style.shadow_offset = Vector2(0, 2)
 	return style
+
+func _ensure_upgrade_badge() -> void:
+	if _upgrade_badge:
+		return
+	_upgrade_badge = PanelContainer.new()
+	_upgrade_badge.size = Vector2(88, 30)
+	_upgrade_badge.custom_minimum_size = Vector2(88, 30)
+	_upgrade_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_upgrade_badge.add_theme_stylebox_override("panel", _create_upgrade_badge_stylebox())
+	_upgrade_icon.add_child(_upgrade_badge)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 7)
+	margin.add_theme_constant_override("margin_top", 3)
+	margin.add_theme_constant_override("margin_right", 7)
+	margin.add_theme_constant_override("margin_bottom", 3)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_upgrade_badge.add_child(margin)
+
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 4)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(row)
+
+	var arrow_label := Label.new()
+	arrow_label.text = "^"
+	arrow_label.add_theme_font_size_override("font_size", 18)
+	arrow_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.25))
+	arrow_label.add_theme_color_override("font_outline_color", Color(0.08, 0.05, 0.02))
+	arrow_label.add_theme_constant_override("outline_size", 2)
+	arrow_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(arrow_label)
+
+	var gold_icon := TextureRect.new()
+	gold_icon.custom_minimum_size = Vector2(16, 16)
+	gold_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	gold_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	gold_icon.texture = GOLD_ICON
+	gold_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(gold_icon)
+
+	_upgrade_cost_label = Label.new()
+	_upgrade_cost_label.add_theme_font_size_override("font_size", 14)
+	_upgrade_cost_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.25))
+	_upgrade_cost_label.add_theme_color_override("font_outline_color", Color(0.08, 0.05, 0.02))
+	_upgrade_cost_label.add_theme_constant_override("outline_size", 2)
+	_upgrade_cost_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(_upgrade_cost_label)
 
 func _on_gold_changed(_new_gold: int) -> void:
 	_update_upgrade_icon()

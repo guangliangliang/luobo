@@ -4,10 +4,11 @@
 
 [resource]
 script = ExtResource("1")
-monster_name = "狂暴哥布林"
-monster_type = "berserker_goblin"
-max_health = 50
-move_speed = 150.0
-reward = 80
-body_color = Color(0.9, 0.2, 0.1, 1)
-body_radius = 14.0
+monster_name = "野狼"
+monster_type = "wild_wolf"
+monster_category = "敏捷"
+max_health = 35
+move_speed = 125.0
+reward = 30
+body_color = Color(0.45, 0.45, 0.42, 1)
+body_radius = 12.0

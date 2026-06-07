@@ -5,7 +5,7 @@
 
 [sub_resource type="Resource" id="WaveData_wave1"]
 script = ExtResource("2_script")
-monster_type = "wolf"
+monster_type = "wild_wolf"
 count = 30
 spawn_interval = 0.36
 path_index = 1
@@ -13,7 +13,7 @@ is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave2"]
 script = ExtResource("2_script")
-monster_type = "bandit"
+monster_type = "robber"
 count = 16
 spawn_interval = 0.42
 path_index = 1
@@ -21,7 +21,7 @@ is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave3"]
 script = ExtResource("2_script")
-monster_type = "wolf"
+monster_type = "thief"
 count = 42
 spawn_interval = 0.30
 path_index = -1
@@ -29,7 +29,7 @@ is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave4"]
 script = ExtResource("2_script")
-monster_type = "bandit"
+monster_type = "mountain_bandit"
 count = 30
 spawn_interval = 0.34
 path_index = -1
@@ -37,18 +37,18 @@ is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave5"]
 script = ExtResource("2_script")
-monster_type = "bear"
+monster_type = "brown_bear"
 count = 3
 spawn_interval = 0.95
 path_index = -1
 is_boss = false
-support_monster_type = "wolf"
+support_monster_type = "boar"
 support_count = 24
 support_spawn_interval = 0.30
 
 [sub_resource type="Resource" id="WaveData_wave6"]
 script = ExtResource("2_script")
-monster_type = "bandit"
+monster_type = "shield_bandit"
 count = 36
 spawn_interval = 0.30
 path_index = -1
@@ -56,23 +56,23 @@ is_boss = false
 
 [sub_resource type="Resource" id="WaveData_wave7"]
 script = ExtResource("2_script")
-monster_type = "bear"
+monster_type = "tiger"
 count = 6
 spawn_interval = 0.85
 path_index = -1
 is_boss = true
-support_monster_type = "bandit"
+support_monster_type = "mountain_bandit"
 support_count = 18
 support_spawn_interval = 0.34
 
 [sub_resource type="Resource" id="WaveData_wave8"]
 script = ExtResource("2_script")
-monster_type = "bear"
+monster_type = "bandit_leader"
 count = 4
 spawn_interval = 0.75
 path_index = -1
 is_boss = true
-support_monster_type = "wolf"
+support_monster_type = "wild_wolf"
 support_count = 36
 support_spawn_interval = 0.26
 

@@ -7,6 +7,7 @@ signal monster_count_changed(count: int)
 const MONSTER_SCENE: PackedScene = preload("res://scenes/Monster.tscn")
 
 var _spawn_queue: Array[Dictionary] = []
+var _spawn_index: int = 0
 var _spawn_timer: float = 0.0
 var _is_spawning: bool = false
 var _active_monsters: Array[PathFollow2D] = []
@@ -50,6 +51,7 @@ func start_wave(wave_index: int) -> void:
 	_is_spawning = true
 	_all_spawned_emitted = false
 	_spawn_queue.clear()
+	_spawn_index = 0
 	set_process(true)
 	
 	var path_indices: Array[int] = []
@@ -82,7 +84,7 @@ func _append_spawn_entries(monster_type: String, count: int, interval: float, pa
 		})
 
 func get_active_count() -> int:
-	return _active_monsters.size() + _spawn_queue.size()
+	return _active_monsters.size() + _get_remaining_spawn_count()
 
 func get_current_wave() -> int:
 	return _current_wave_index
@@ -91,7 +93,7 @@ func _process(delta: float) -> void:
 	if not _is_spawning:
 		return
 	
-	if _spawn_queue.is_empty():
+	if _get_remaining_spawn_count() <= 0:
 		_emit_all_spawned_once()
 		if _active_monsters.is_empty():
 			_is_spawning = false
@@ -100,15 +102,16 @@ func _process(delta: float) -> void:
 	
 	_spawn_timer -= delta
 	if _spawn_timer <= 0:
-		var info: Dictionary = _spawn_queue.pop_front()
+		var info: Dictionary = _spawn_queue[_spawn_index]
+		_spawn_index += 1
 		_spawn_monster(info.monster_type, info.path_index)
 		_emit_monster_count_changed()
-		if _spawn_queue.size() > 0:
-			_spawn_timer = _spawn_queue[0].interval
+		if _get_remaining_spawn_count() > 0:
+			_spawn_timer = _spawn_queue[_spawn_index].interval
 		else:
 			_spawn_timer = 0
 	
-	if _spawn_queue.is_empty() and _active_monsters.is_empty():
+	if _get_remaining_spawn_count() <= 0 and _active_monsters.is_empty():
 		_emit_all_spawned_once()
 		_is_spawning = false
 		wave_complete.emit()
@@ -145,10 +148,13 @@ func _on_monster_reached_end(monster: PathFollow2D) -> void:
 	_remove_active_monster(monster)
 
 func is_wave_clear() -> bool:
-	return _spawn_queue.is_empty() and _active_monsters.is_empty()
+	return _get_remaining_spawn_count() <= 0 and _active_monsters.is_empty()
 
 func get_all_monsters() -> Array:
 	return _active_monsters
+
+func _get_remaining_spawn_count() -> int:
+	return maxi(0, _spawn_queue.size() - _spawn_index)
 
 func _emit_monster_count_changed() -> void:
 	monster_count_changed.emit(get_active_count())

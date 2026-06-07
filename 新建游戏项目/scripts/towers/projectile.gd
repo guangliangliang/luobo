@@ -1,4 +1,4 @@
-extends CharacterBody2D
+extends Node2D
 
 const PROJECTILE_TEXTURES: Dictionary = {
 	"arrow": preload("res://assets/effects/projectiles/arrow_projectile.png"),
@@ -17,8 +17,12 @@ const HIT_EFFECT_TEXTURES: Dictionary = {
 	"ice": preload("res://assets/effects/新建文件夹/freeze_hit_sheet.png"),
 }
 const HIT_EFFECT_OFFSET := Vector2(0, -18)
+const MAX_ACTIVE_HIT_EFFECTS := 4
+const HIT_EFFECT_LIFETIME := 0.5
 
+static var _projectile_texture_cache: Dictionary = {}
 static var _hit_effect_frames_cache: Dictionary = {}
+static var _active_hit_effects: int = 0
 
 var _start_pos: Vector2
 var _target: Node2D
@@ -31,6 +35,12 @@ var _slow_duration: float
 var _is_active: bool = true
 var _sprite: Sprite2D = null
 var _spawner: Node = null
+
+static func prewarm_projectile_assets() -> void:
+	for tower_type: String in PROJECTILE_TEXTURES:
+		_get_projectile_texture(tower_type)
+	for tower_type: String in HIT_EFFECT_TEXTURES:
+		_get_effect_frames(tower_type)
 
 func setup(start: Vector2, target: Node2D, damage: float, speed: float, tower_type: String, splash_radius: float = 0.0, slow_percent: float = 0.0, slow_duration: float = 0.0) -> void:
 	global_position = start
@@ -56,7 +66,6 @@ func _physics_process(delta: float) -> void:
 		return
 	
 	var direction: Vector2 = (_target.global_position - global_position).normalized()
-	velocity = direction * _speed
 	if _sprite:
 		_sprite.rotation = direction.angle()
 	
@@ -65,7 +74,7 @@ func _physics_process(delta: float) -> void:
 		_hit()
 		return
 	
-	move_and_slide()
+	global_position += direction * _speed * delta
 
 func _find_spawner() -> Node:
 	if not is_inside_tree():
@@ -127,10 +136,15 @@ func _setup_sprite() -> void:
 	if not PROJECTILE_TEXTURES.has(_tower_type):
 		return
 	_sprite = Sprite2D.new()
-	_sprite.texture = _make_atlas_texture(PROJECTILE_TEXTURES[_tower_type], PROJECTILE_REGIONS[_tower_type])
+	_sprite.texture = _get_projectile_texture(_tower_type)
 	_sprite.scale = Vector2.ONE * (_get_projectile_target_width() / _sprite.texture.get_width())
 	_sprite.visible = true
 	add_child(_sprite)
+
+static func _get_projectile_texture(tower_type: String) -> AtlasTexture:
+	if not _projectile_texture_cache.has(tower_type):
+		_projectile_texture_cache[tower_type] = _make_atlas_texture(PROJECTILE_TEXTURES[tower_type], PROJECTILE_REGIONS[tower_type])
+	return _projectile_texture_cache[tower_type]
 
 func _get_projectile_target_width() -> float:
 	match _tower_type:
@@ -146,6 +160,8 @@ func _get_projectile_target_width() -> float:
 func _spawn_hit_effect() -> void:
 	if not HIT_EFFECT_TEXTURES.has(_tower_type):
 		return
+	if _active_hit_effects >= MAX_ACTIVE_HIT_EFFECTS:
+		return
 	var effect: AnimatedSprite2D = AnimatedSprite2D.new()
 	effect.sprite_frames = _get_effect_frames(_tower_type)
 	effect.animation = "hit"
@@ -155,16 +171,29 @@ func _spawn_hit_effect() -> void:
 	effect.z_index = 5
 	var root: Node = get_tree().current_scene
 	if root:
+		_active_hit_effects += 1
 		root.add_child(effect)
 		effect.play("hit")
-		effect.animation_finished.connect(effect.queue_free)
+		effect.animation_finished.connect(func(): _release_hit_effect(effect), CONNECT_ONE_SHOT)
+		effect.tree_exiting.connect(func(): _release_hit_effect(effect, false), CONNECT_ONE_SHOT)
+		root.get_tree().create_timer(HIT_EFFECT_LIFETIME).timeout.connect(func(): _release_hit_effect(effect), CONNECT_ONE_SHOT)
 
-func _get_effect_frames(tower_type: String) -> SpriteFrames:
+static func _release_hit_effect(effect: AnimatedSprite2D, should_free: bool = true) -> void:
+	if not is_instance_valid(effect):
+		return
+	if bool(effect.get_meta("released", false)):
+		return
+	effect.set_meta("released", true)
+	_active_hit_effects = maxi(0, _active_hit_effects - 1)
+	if should_free:
+		effect.queue_free()
+
+static func _get_effect_frames(tower_type: String) -> SpriteFrames:
 	if not _hit_effect_frames_cache.has(tower_type):
 		_hit_effect_frames_cache[tower_type] = _create_effect_frames(HIT_EFFECT_TEXTURES[tower_type])
 	return _hit_effect_frames_cache[tower_type]
 
-func _create_effect_frames(texture: Texture2D) -> SpriteFrames:
+static func _create_effect_frames(texture: Texture2D) -> SpriteFrames:
 	var frames: SpriteFrames = SpriteFrames.new()
 	frames.add_animation("hit")
 	frames.set_animation_loop("hit", false)
@@ -184,7 +213,7 @@ func _get_hit_effect_scale() -> float:
 		_:
 			return 0.1
 
-func _make_atlas_texture(texture: Texture2D, region: Rect2) -> AtlasTexture:
+static func _make_atlas_texture(texture: Texture2D, region: Rect2) -> AtlasTexture:
 	var atlas: AtlasTexture = AtlasTexture.new()
 	atlas.atlas = texture
 	atlas.region = region

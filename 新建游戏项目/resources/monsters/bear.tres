@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1")
-monster_name = "大熊"
+monster_name = "熊"
 monster_type = "bear"
 max_health = 500
 move_speed = 50.0

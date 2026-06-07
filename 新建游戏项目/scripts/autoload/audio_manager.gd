@@ -19,12 +19,19 @@ const SFX_STREAM_PATHS: Dictionary = {
 	"defeat": "res://assets/audio/sfx/defeat.wav",
 }
 const SFX_POOL_SIZE: int = 16
+const SFX_MIN_INTERVALS: Dictionary = {
+	"attack_arrow": 45,
+	"attack_cannon": 60,
+	"attack_ice": 55,
+	"monster_die": 45,
+}
 
 var _bgm_player: AudioStreamPlayer
 var _bgm_streams: Dictionary = {}
 var _sfx_streams: Dictionary = {}
 var _sfx_players: Array[AudioStreamPlayer] = []
 var _sfx_pool_index: int = 0
+var _last_sfx_play_msec: Dictionary = {}
 var _sfx_enabled: bool = true
 var _bgm_volume: float = 0.5
 var _current_bgm: String = ""
@@ -76,12 +83,25 @@ func stop_bgm() -> void:
 func play_sfx(name: String) -> void:
 	if not _sfx_enabled:
 		return
+	if not _can_play_sfx_now(name):
+		return
 	var stream: AudioStream = _get_sfx_stream(name)
 	if stream:
 		var player: AudioStreamPlayer = _get_available_sfx_player()
 		player.stream = stream
 		player.volume_db = -10.0
 		player.play()
+
+func _can_play_sfx_now(name: String) -> bool:
+	var min_interval_msec: int = int(SFX_MIN_INTERVALS.get(name, 0))
+	if min_interval_msec <= 0:
+		return true
+	var now_msec: int = Time.get_ticks_msec()
+	var last_msec: int = int(_last_sfx_play_msec.get(name, -min_interval_msec))
+	if now_msec - last_msec < min_interval_msec:
+		return false
+	_last_sfx_play_msec[name] = now_msec
+	return true
 
 func _get_available_sfx_player() -> AudioStreamPlayer:
 	if _sfx_players.is_empty():

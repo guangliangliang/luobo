@@ -4,10 +4,11 @@
 
 [resource]
 script = ExtResource("1")
-monster_name = "狼"
-monster_type = "wolf"
-max_health = 30
-move_speed = 80.0
-reward = 25
-body_color = Color(0.5, 0.5, 0.5, 1)
-body_radius = 12.0
+monster_name = "小偷"
+monster_type = "thief"
+monster_category = "敏捷"
+max_health = 28
+move_speed = 170.0
+reward = 35
+body_color = Color(0.08, 0.1, 0.12, 1)
+body_radius = 11.0
