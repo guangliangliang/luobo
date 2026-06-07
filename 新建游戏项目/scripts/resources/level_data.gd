@@ -6,6 +6,8 @@ extends Resource
 @export var starting_gold: int = 200
 @export var village_health: int = 20
 @export var village_position: Vector2 = Vector2(960, 540)
+@export var background_texture: Texture2D
+@export var village_texture: Texture2D
 @export var path_points: Array[PackedVector2Array] = []
 @export var build_spots: PackedVector2Array = []
 @export var waves: Array[WaveData] = []

@@ -1,7 +1,9 @@
-[gd_resource type="Resource" script_class="LevelData" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="LevelData" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/resources/level_data.gd" id="1_script"]
 [ext_resource type="Script" path="res://scripts/resources/wave_data.gd" id="2_script"]
+[ext_resource type="Texture2D" path="res://assets/maps/background/farm_bg.png" id="3_bg"]
+[ext_resource type="Texture2D" path="res://assets/maps/village/granary_core.png" id="4_village"]
 
 [sub_resource type="Resource" id="WaveData_wave1"]
 script = ExtResource("2_script")
@@ -72,6 +74,8 @@ level_id = 4
 starting_gold = 450
 village_health = 9
 village_position = Vector2(1200, 360)
+background_texture = ExtResource("3_bg")
+village_texture = ExtResource("4_village")
 path_points = [PackedVector2Array(40, 260, 360, 260, 360, 460, 680, 460, 680, 300, 980, 300, 980, 360, 1144, 360)]
 build_spots = PackedVector2Array()
 waves = [SubResource("WaveData_wave1"), SubResource("WaveData_wave2"), SubResource("WaveData_wave3"), SubResource("WaveData_wave4"), SubResource("WaveData_wave5"), SubResource("WaveData_wave6"), SubResource("WaveData_wave7")]

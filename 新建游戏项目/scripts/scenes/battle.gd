@@ -82,9 +82,10 @@ func _create_map() -> void:
 
 func _draw_background() -> void:
 	var bg_sprite: Sprite2D = Sprite2D.new()
-	bg_sprite.texture = BACKGROUND_TEXTURE
+	var bg_texture: Texture2D = _get_level_background_texture()
+	bg_sprite.texture = bg_texture
 	bg_sprite.centered = false
-	bg_sprite.scale = Vector2(1280.0 / BACKGROUND_TEXTURE.get_width(), 720.0 / BACKGROUND_TEXTURE.get_height())
+	bg_sprite.scale = Vector2(1280.0 / bg_texture.get_width(), 720.0 / bg_texture.get_height())
 	bg_sprite.z_index = -10
 	_map_drawer.add_child(bg_sprite)
 
@@ -115,7 +116,8 @@ func _draw_village() -> void:
 	_village_drawer.position = _level_data.village_position
 	_village_drawer.z_index = 0
 	_map_drawer.add_child(_village_drawer)
-	var village_texture: AtlasTexture = _make_atlas_texture(VILLAGE_TEXTURE, Rect2(576, 104, 885, 901))
+	var raw_village_texture: Texture2D = _get_level_village_texture()
+	var village_texture: AtlasTexture = _make_atlas_texture(raw_village_texture, _get_visible_texture_region(raw_village_texture))
 	var village_sprite: Sprite2D = Sprite2D.new()
 	village_sprite.texture = village_texture
 	village_sprite.scale = Vector2.ONE * (118.0 / village_texture.get_height())
@@ -209,6 +211,48 @@ func _make_atlas_texture(texture: Texture2D, region: Rect2) -> AtlasTexture:
 	atlas.atlas = texture
 	atlas.region = region
 	return atlas
+
+func _get_level_background_texture() -> Texture2D:
+	if _level_data.background_texture:
+		return _level_data.background_texture
+	return BACKGROUND_TEXTURE
+
+func _get_level_village_texture() -> Texture2D:
+	if _level_data.village_texture:
+		return _level_data.village_texture
+	return VILLAGE_TEXTURE
+
+func _get_visible_texture_region(texture: Texture2D) -> Rect2:
+	var image: Image = texture.get_image()
+	if image == null or image.is_empty():
+		return Rect2(Vector2.ZERO, texture.get_size())
+	if image.detect_alpha() == Image.ALPHA_NONE:
+		return Rect2(Vector2.ZERO, texture.get_size())
+
+	var width: int = image.get_width()
+	var height: int = image.get_height()
+	var min_x: int = width
+	var min_y: int = height
+	var max_x: int = -1
+	var max_y: int = -1
+
+	for y in range(height):
+		for x in range(width):
+			if image.get_pixel(x, y).a > 0.05:
+				min_x = mini(min_x, x)
+				min_y = mini(min_y, y)
+				max_x = maxi(max_x, x)
+				max_y = maxi(max_y, y)
+
+	if max_x < min_x or max_y < min_y:
+		return Rect2(Vector2.ZERO, texture.get_size())
+
+	var padding: int = 4
+	min_x = maxi(min_x - padding, 0)
+	min_y = maxi(min_y - padding, 0)
+	max_x = mini(max_x + padding, width - 1)
+	max_y = mini(max_y + padding, height - 1)
+	return Rect2(min_x, min_y, max_x - min_x + 1, max_y - min_y + 1)
 
 func _create_managers() -> void:
 	_spawner = Node2D.new()
