@@ -61,6 +61,7 @@ func _setup_ui() -> void:
 	var close_btn: Button = Button.new()
 	close_btn.text = "X"
 	close_btn.custom_minimum_size = Vector2(42, 38)
+	close_btn.focus_mode = Control.FOCUS_NONE
 	close_btn.add_theme_font_size_override("font_size", 20)
 	close_btn.pressed.connect(func(): close_pressed.emit())
 	header.add_child(close_btn)
@@ -112,6 +113,7 @@ func _make_tab_button(text: String) -> Button:
 	button.text = text
 	button.custom_minimum_size = Vector2(118, 42)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", 21)
 	return button
 
@@ -119,6 +121,7 @@ func _make_avatar_button(label_text: String, image_path: String, selected: bool)
 	var button: Button = Button.new()
 	button.text = ""
 	button.custom_minimum_size = Vector2(104, 86)
+	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_stylebox_override("normal", _create_avatar_stylebox(selected))
 	button.add_theme_stylebox_override("hover", _create_avatar_stylebox(true))
 	button.add_theme_stylebox_override("pressed", _create_avatar_stylebox(true))

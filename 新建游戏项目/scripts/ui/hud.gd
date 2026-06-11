@@ -68,9 +68,11 @@ func _make_hud_button(text: String) -> Button:
 	button.add_theme_color_override("font_color", Color.WHITE)
 	button.add_theme_color_override("font_hover_color", Color(1.0, 0.9, 0.45))
 	button.add_theme_color_override("font_pressed_color", Color(0.85, 0.95, 1.0))
+	button.add_theme_color_override("font_focus_color", Color.WHITE)
 	button.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
 	button.add_theme_constant_override("shadow_offset_x", 2)
 	button.add_theme_constant_override("shadow_offset_y", 2)
+	button.focus_mode = Control.FOCUS_NONE
 	return button
 
 func update_gold(gold: int) -> void:

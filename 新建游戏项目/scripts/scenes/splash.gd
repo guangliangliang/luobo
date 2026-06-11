@@ -106,6 +106,7 @@ func _show_main_menu_ui() -> void:
 
 func _apply_menu_button_style(button: Button, font_size: int) -> void:
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_stylebox_override("normal", _make_button_style(BUTTON_NORMAL))
 	button.add_theme_stylebox_override("hover", _make_button_style(BUTTON_HOVER))
 	button.add_theme_stylebox_override("pressed", _make_button_style(BUTTON_PRESSED))

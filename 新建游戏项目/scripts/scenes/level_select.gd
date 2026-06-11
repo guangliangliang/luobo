@@ -117,6 +117,7 @@ func _setup_ui() -> void:
 
 func _apply_menu_button_style(button: Button, font_size: int) -> void:
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_stylebox_override("normal", _make_menu_button_style(BUTTON_NORMAL))
 	button.add_theme_stylebox_override("hover", _make_menu_button_style(BUTTON_HOVER))
 	button.add_theme_stylebox_override("pressed", _make_menu_button_style(BUTTON_PRESSED))
@@ -131,6 +132,7 @@ func _apply_menu_button_style(button: Button, font_size: int) -> void:
 	button.add_theme_constant_override("shadow_offset_y", 2)
 
 func _apply_level_button_style(button: Button) -> void:
+	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_stylebox_override("normal", _make_level_card_style(LEVEL_CARD_NORMAL))
 	button.add_theme_stylebox_override("hover", _make_level_card_style(LEVEL_CARD_HOVER))
 	button.add_theme_stylebox_override("pressed", _make_level_card_style(LEVEL_CARD_HOVER))
@@ -140,7 +142,6 @@ func _apply_level_button_style(button: Button) -> void:
 	button.add_theme_color_override("font_hover_color", LEVEL_TEXT_HOVER)
 	button.add_theme_color_override("font_pressed_color", LEVEL_TEXT_SELECTED)
 	button.add_theme_color_override("font_hover_pressed_color", LEVEL_TEXT_SELECTED)
-	button.add_theme_color_override("font_focus_color", LEVEL_TEXT_NORMAL)
 	button.add_theme_color_override("font_disabled_color", Color(0.25, 0.24, 0.23))
 	button.add_theme_color_override("font_outline_color", Color(1.0, 0.86, 0.48))
 	button.add_theme_color_override("font_shadow_color", Color(1.0, 0.86, 0.48, 0.9))

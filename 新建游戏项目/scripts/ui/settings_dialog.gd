@@ -106,6 +106,7 @@ func _make_menu_button(text: String) -> Button:
 	button.custom_minimum_size = Vector2(180, 44)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.add_theme_font_size_override("font_size", 21)
+	button.focus_mode = Control.FOCUS_NONE
 	return button
 
 func _make_separator() -> HSeparator:

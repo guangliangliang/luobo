@@ -12,7 +12,7 @@ config_version=5
 
 config/name="守卫村庄"
 run/main_scene="res://scenes/Splash.tscn"
-config/features=PackedStringArray("4.6", "Mobile")
+config/features=PackedStringArray("4.5", "Mobile")
 config/icon="res://icon.svg"
 
 [autoload]
@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 GameManager="*res://scripts/autoload/game_manager.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
 AudioManager="*res://scripts/autoload/audio_manager.gd"
+FocusFixer="*res://scripts/autoload/FocusFixer.gd"
 
 [display]
 
