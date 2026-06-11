@@ -24,6 +24,15 @@ func setup(level_data: LevelData) -> void:
 func get_build_spots() -> Array:
 	return _build_spots
 
+func get_built_towers() -> Array:
+	return _built_towers.values()
+
+func get_spot_index_for_tower(tower: Node2D) -> int:
+	for spot_index: int in _built_towers:
+		if _built_towers[spot_index] == tower:
+			return spot_index
+	return -1
+
 func is_spot_occupied(spot_index: int) -> bool:
 	var spot: Dictionary = _get_spot_by_index(spot_index)
 	if spot.is_empty():
@@ -97,6 +106,8 @@ func build_tower_at_position(pos: Vector2, tower_type: String) -> Node2D:
 func _generate_build_spots() -> void:
 	if _level_data == null:
 		return
+	if _load_configured_build_spots():
+		return
 	var start_x: float = MAP_BOUNDS.position.x + TOWER_SPACING * 0.5
 	var end_x: float = MAP_BOUNDS.end.x - TOWER_SPACING * 0.5
 	var start_y: float = MAP_BOUNDS.position.y + TOWER_SPACING * 0.5
@@ -115,6 +126,18 @@ func _generate_build_spots() -> void:
 				_next_spot_index += 1
 			x += TOWER_SPACING
 		y += TOWER_SPACING
+
+func _load_configured_build_spots() -> bool:
+	if _level_data.build_spots.is_empty():
+		return false
+	for pos: Vector2 in _level_data.build_spots:
+		_build_spots.append({
+			"index": _next_spot_index,
+			"position": pos,
+			"occupied": false,
+		})
+		_next_spot_index += 1
+	return true
 
 func _is_valid_build_position(pos: Vector2) -> bool:
 	if not MAP_BOUNDS.has_point(pos):

@@ -14,6 +14,8 @@ const LEVEL_TEXT_NORMAL: Color = Color(0.28, 0.12, 0.02)
 const LEVEL_TEXT_HOVER: Color = Color(0.18, 0.08, 0.01)
 const LEVEL_TEXT_SELECTED: Color = Color(0.72, 0.26, 0.02)
 const DRAG_THRESHOLD: float = 8.0
+const CONTENT_MAX_WIDTH: float = 1040.0
+const CONTENT_MARGIN: float = 24.0
 
 var _level_buttons: Dictionary = {}
 var _level_scroll: ScrollContainer
@@ -29,6 +31,8 @@ func _ready() -> void:
 
 func _setup_ui() -> void:
 	anchors_preset = Control.PRESET_FULL_RECT
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var horizontal_margin: float = maxf(CONTENT_MARGIN, (viewport_size.x - CONTENT_MAX_WIDTH) * 0.5)
 
 	var bg: TextureRect = TextureRect.new()
 	bg.texture = MENU_BG
@@ -43,11 +47,11 @@ func _setup_ui() -> void:
 	add_child(shade)
 
 	var center: VBoxContainer = VBoxContainer.new()
-	center.set_anchors_preset(Control.PRESET_CENTER)
-	center.offset_left = -520
-	center.offset_top = -285
-	center.offset_right = 520
-	center.offset_bottom = 285
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.offset_left = horizontal_margin
+	center.offset_top = 20
+	center.offset_right = -horizontal_margin
+	center.offset_bottom = -20
 	center.add_theme_constant_override("separation", 10)
 	center.alignment = BoxContainer.ALIGNMENT_CENTER
 	add_child(center)
@@ -56,7 +60,8 @@ func _setup_ui() -> void:
 	logo.texture = LOGO_TEXTURE
 	logo.expand_mode = TextureRect.EXPAND_FIT_WIDTH
 	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	logo.custom_minimum_size = Vector2(430, 220)
+	logo.custom_minimum_size = Vector2(0, 180)
+	logo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	center.add_child(logo)
 
 	var title: Label = Label.new()
@@ -70,7 +75,8 @@ func _setup_ui() -> void:
 	center.add_child(title)
 
 	_level_scroll = ScrollContainer.new()
-	_level_scroll.custom_minimum_size = Vector2(980, 172)
+	_level_scroll.custom_minimum_size = Vector2(0, 172)
+	_level_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_level_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	_level_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_level_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -82,25 +88,19 @@ func _setup_ui() -> void:
 	levels_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	_level_scroll.add_child(levels_hbox)
 
-	var level_configs: Array = [
-		{"id": 1, "name": "第一关\n村口防线"},
-		{"id": 2, "name": "第二关\n分兵两路"},
-		{"id": 3, "name": "第三关\n林间岔口"},
-		{"id": 4, "name": "第四关\n盗匪急袭"},
-		{"id": 5, "name": "第五关\n环村小路"},
-		{"id": 6, "name": "第六关\n南北夹击"},
-		{"id": 7, "name": "第七关\n三面围攻"},
-		{"id": 8, "name": "第八关\n最后防线"},
-	]
-
-	for cfg: Dictionary in level_configs:
+	var level_ids: Array = GameManager.level_datas.keys()
+	level_ids.sort()
+	for level_id: int in level_ids:
+		var level_data: LevelData = GameManager.get_level_data(level_id)
+		if not level_data:
+			continue
 		var btn: Button = Button.new()
-		btn.text = cfg.name
+		btn.text = "第%d关\n%s" % [level_id, level_data.level_name]
 		btn.custom_minimum_size = Vector2(246, 150)
 		_apply_level_button_style(btn)
-		btn.pressed.connect(_on_level_pressed.bind(cfg.id))
+		btn.pressed.connect(_on_level_pressed.bind(level_id))
 		levels_hbox.add_child(btn)
-		_level_buttons[cfg.id] = btn
+		_level_buttons[level_id] = btn
 
 	var spacer: Control = Control.new()
 	spacer.custom_minimum_size = Vector2(0, 14)

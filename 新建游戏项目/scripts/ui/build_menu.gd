@@ -183,6 +183,9 @@ func _on_tower_btn_pressed(tower_type: String) -> void:
 	else:
 		_update_button_states()
 
+func refresh_button_states() -> void:
+	_update_button_states()
+
 func _update_button_states() -> void:
 	for tower_type: String in _buttons:
 		var td: TowerData = GameManager.get_tower_data(tower_type)

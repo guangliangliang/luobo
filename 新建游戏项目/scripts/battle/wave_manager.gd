@@ -42,6 +42,9 @@ func on_wave_monsters_cleared() -> void:
 func get_current_wave() -> int:
 	return _current_wave + 1
 
+func get_current_wave_index() -> int:
+	return _current_wave
+
 func get_total_waves() -> int:
 	return _total_waves
 

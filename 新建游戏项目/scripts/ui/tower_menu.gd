@@ -185,6 +185,9 @@ func show_for_tower(tower: Node2D, pos: Vector2) -> void:
 
 	visible = true
 
+func refresh_info() -> void:
+	_update_info()
+
 func _update_info() -> void:
 	if not _tower or not is_instance_valid(_tower):
 		hide_menu()

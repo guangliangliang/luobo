@@ -83,9 +83,10 @@ func _create_map() -> void:
 func _draw_background() -> void:
 	var bg_sprite: Sprite2D = Sprite2D.new()
 	var bg_texture: Texture2D = _get_level_background_texture()
+	var viewport_size: Vector2 = get_viewport_rect().size
 	bg_sprite.texture = bg_texture
 	bg_sprite.centered = false
-	bg_sprite.scale = Vector2(1280.0 / bg_texture.get_width(), 720.0 / bg_texture.get_height())
+	bg_sprite.scale = Vector2(viewport_size.x / bg_texture.get_width(), viewport_size.y / bg_texture.get_height())
 	bg_sprite.z_index = -10
 	_map_drawer.add_child(bg_sprite)
 
@@ -345,6 +346,7 @@ func _connect_signals() -> void:
 	_tower_menu.cancel_pressed.connect(_on_cancel_tower_menu)
 	_build_mgr.tower_placed.connect(_on_tower_placed)
 	_spawner.monster_count_changed.connect(_on_monster_count_changed)
+	_spawner.wave_complete.connect(_on_spawner_wave_complete)
 	_wave_mgr.wave_started.connect(_on_wave_started)
 	_wave_mgr.wave_completed.connect(_on_wave_completed)
 	GameManager.gold_changed.connect(_on_gold_changed)
@@ -420,8 +422,7 @@ func _on_countdown_tick() -> void:
 func _auto_start_first_wave() -> void:
 	if _wave_mgr.can_start_wave():
 		_game_started = true
-		_wave_mgr.start_next_wave()
-		_spawner.start_wave(_wave_mgr._current_wave)
+		_start_next_wave()
 
 func _on_wave_started(wave_index: int) -> void:
 	_update_hud()
@@ -433,8 +434,13 @@ func _on_wave_completed(_wave_index: int) -> void:
 
 func _auto_start_next_wave() -> void:
 	if _wave_mgr.can_start_wave():
-		_wave_mgr.start_next_wave()
-		_spawner.start_wave(_wave_mgr._current_wave)
+		_start_next_wave()
+
+func _start_next_wave() -> void:
+	_wave_mgr.start_next_wave()
+	var wave_index: int = _wave_mgr.get_current_wave_index()
+	if wave_index >= 0:
+		_spawner.start_wave(wave_index)
 
 func _on_build_tower(tower_type: String) -> void:
 	if _build_mgr.can_build_at_position(_selected_build_position):
@@ -454,7 +460,7 @@ func _on_upgrade_tower() -> void:
 		tower.upgrade()
 		_suppress_tower_menu_gold_update = false
 		if tower.can_upgrade() and GameManager.current_gold >= tower.get_upgrade_cost():
-			_tower_menu._update_info()
+			_tower_menu.refresh_info()
 		else:
 			_tower_menu.hide_menu()
 			_hide_tower_range()
@@ -463,11 +469,7 @@ func _on_upgrade_tower() -> void:
 func _on_sell_tower() -> void:
 	var tower: Node2D = _tower_menu.get_tower()
 	if tower and is_instance_valid(tower):
-		var spot_idx: int = -1
-		for idx: int in _build_mgr._built_towers:
-			if _build_mgr._built_towers[idx] == tower:
-				spot_idx = idx
-				break
+		var spot_idx: int = _build_mgr.get_spot_index_for_tower(tower)
 		tower.sell()
 		if spot_idx >= 0:
 			_build_mgr.free_spot(spot_idx)
@@ -490,9 +492,9 @@ func _close_context_menus() -> void:
 
 func _on_gold_changed(_new_gold: int) -> void:
 	if _tower_menu and _tower_menu.visible and not _suppress_tower_menu_gold_update:
-		_tower_menu._update_info()
+		_tower_menu.refresh_info()
 	if _build_menu and _build_menu.visible:
-		_build_menu._update_button_states()
+		_build_menu.refresh_button_states()
 
 func _on_village_health_changed(_new_health: int) -> void:
 	_update_village_health_marker()
@@ -503,6 +505,11 @@ func _on_tower_placed(_tower: Node2D, _spot_index: int) -> void:
 func _on_monster_count_changed(count: int) -> void:
 	if _hud:
 		_hud.update_monster_count(count)
+
+func _on_spawner_wave_complete() -> void:
+	if _wave_mgr and _wave_mgr.is_wave_active():
+		_wave_mgr.on_wave_monsters_cleared()
+		_update_hud()
 
 func _update_hud() -> void:
 	if _hud and _wave_mgr and _spawner:
@@ -538,7 +545,7 @@ func _input(event: InputEvent) -> void:
 		_hide_tower_range()
 		_tower_menu.hide_menu()
 	
-	for tower: Node2D in _build_mgr._built_towers.values():
+	for tower: Node2D in _build_mgr.get_built_towers():
 		if is_instance_valid(tower) and tower.is_click_in_area(click_pos):
 			_hide_tower_range()
 			_selected_tower = tower
@@ -576,11 +583,3 @@ func _refresh_build_spot_markers() -> void:
 		if _build_spot_sprites.has(spot_index):
 			var marker: Sprite2D = _build_spot_sprites[spot_index]
 			marker.visible = not _build_mgr.is_spot_occupied(spot_index)
-
-func _process(_delta: float) -> void:
-	if _is_paused:
-		return
-
-	if _wave_mgr and _spawner and _wave_mgr.is_wave_active() and _spawner.is_wave_clear():
-		_wave_mgr.on_wave_monsters_cleared()
-		_update_hud()

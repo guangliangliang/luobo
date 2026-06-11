@@ -22,41 +22,46 @@ func _ready() -> void:
 	await get_tree().create_timer(1.5).timeout
 	_show_main_menu_ui()
 
+func _get_viewport_size() -> Vector2:
+	return get_viewport_rect().size
+
 func _setup_base_ui() -> void:
 	for child in get_children():
 		child.queue_free()
+	var viewport_size: Vector2 = _get_viewport_size()
 
 	var bg: Sprite2D = Sprite2D.new()
 	bg.texture = MENU_BG
 	bg.centered = false
 	bg.position = Vector2.ZERO
-	bg.scale = Vector2(1280.0 / MENU_BG.get_width(), 720.0 / MENU_BG.get_height())
+	bg.scale = Vector2(viewport_size.x / MENU_BG.get_width(), viewport_size.y / MENU_BG.get_height())
 	add_child(bg)
 
 	var shade: ColorRect = ColorRect.new()
-	shade.size = Vector2(1280, 720)
+	shade.size = viewport_size
 	shade.color = Color(0, 0, 0, 0.18)
 	add_child(shade)
 
 	var logo: Sprite2D = Sprite2D.new()
 	logo.texture = LOGO_TEXTURE
-	logo.position = Vector2(640, 230)
+	logo.position = Vector2(viewport_size.x * 0.5, viewport_size.y * 0.32)
 	logo.scale = Vector2(0.215, 0.215)
 	add_child(logo)
 
 func _setup_loading_ui() -> void:
+	var viewport_size: Vector2 = _get_viewport_size()
 	_loading_icon = Sprite2D.new()
 	_loading_icon.texture = LOADING_TEXTURE
 	_loading_icon.region_enabled = true
 	_loading_icon.region_rect = Rect2(0, 0, 128, 128)
-	_loading_icon.position = Vector2(640, 470)
+	_loading_icon.position = Vector2(viewport_size.x * 0.5, viewport_size.y * 0.65)
 	_loading_icon.scale = Vector2(0.7, 0.7)
 	add_child(_loading_icon)
 
 	_loading_label = Label.new()
-	_loading_label.text = "Loading."
-	_loading_label.position = Vector2(540, 540)
-	_loading_label.size = Vector2(200, 36)
+	_loading_label.text = "加载中."
+	_loading_label.size = Vector2(240, 36)
+	_loading_label.position = Vector2(viewport_size.x * 0.5 - _loading_label.size.x * 0.5, viewport_size.y * 0.75)
 	_loading_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_loading_label.add_theme_font_size_override("font_size", 24)
 	_loading_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.45))
@@ -83,9 +88,14 @@ func _show_main_menu_ui() -> void:
 	_loading_icon.queue_free()
 	_loading_label.queue_free()
 
+	var viewport_size: Vector2 = _get_viewport_size()
+	var menu_size := Vector2(330, 180)
 	var menu: VBoxContainer = VBoxContainer.new()
-	menu.position = Vector2(475, 400)
-	menu.size = Vector2(330, 180)
+	menu.position = Vector2(
+		viewport_size.x * 0.5 - menu_size.x * 0.5,
+		maxf(24.0, minf(viewport_size.y - menu_size.y - 24.0, viewport_size.y * 0.56))
+	)
+	menu.size = menu_size
 	menu.add_theme_constant_override("separation", 14)
 	menu.alignment = BoxContainer.ALIGNMENT_CENTER
 	add_child(menu)
@@ -144,7 +154,7 @@ func _on_loading_frame_timeout() -> void:
 
 func _on_loading_text_timeout() -> void:
 	_loading_dot_count = _loading_dot_count % 3 + 1
-	_loading_label.text = "Loading" + ".".repeat(_loading_dot_count)
+	_loading_label.text = "加载中" + ".".repeat(_loading_dot_count)
 
 func _on_start_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/LevelSelect.tscn")

@@ -24,42 +24,53 @@ func _ready() -> void:
 
 func _load_configs() -> void:
 	config = load("res://config/game_config.tres")
-	_load_tower_data("arrow", "res://resources/towers/arrow_tower.tres")
-	_load_tower_data("cannon", "res://resources/towers/cannon_tower.tres")
-	_load_tower_data("ice", "res://resources/towers/ice_tower.tres")
-	_load_monster_data("wild_wolf", "res://resources/monsters/wild_wolf.tres")
-	_load_monster_data("thief", "res://resources/monsters/thief.tres")
-	_load_monster_data("robber", "res://resources/monsters/robber.tres")
-	_load_monster_data("boar", "res://resources/monsters/boar.tres")
-	_load_monster_data("mountain_bandit", "res://resources/monsters/mountain_bandit.tres")
-	_load_monster_data("shield_bandit", "res://resources/monsters/shield_bandit.tres")
-	_load_monster_data("brown_bear", "res://resources/monsters/brown_bear.tres")
-	_load_monster_data("black_bear", "res://resources/monsters/black_bear.tres")
-	_load_monster_data("tiger", "res://resources/monsters/tiger.tres")
-	_load_monster_data("bandit_leader", "res://resources/monsters/bandit_leader.tres")
-	_load_level_data(1, "res://resources/levels/level_01.tres")
-	_load_level_data(2, "res://resources/levels/level_02.tres")
-	_load_level_data(3, "res://resources/levels/level_03.tres")
-	_load_level_data(4, "res://resources/levels/level_04.tres")
-	_load_level_data(5, "res://resources/levels/level_05.tres")
-	_load_level_data(6, "res://resources/levels/level_06.tres")
-	_load_level_data(7, "res://resources/levels/level_07.tres")
-	_load_level_data(8, "res://resources/levels/level_08.tres")
+	tower_datas.clear()
+	monster_datas.clear()
+	level_datas.clear()
+	_load_tower_resources("res://resources/towers")
+	_load_monster_resources("res://resources/monsters")
+	_load_level_resources("res://resources/levels")
 
-func _load_tower_data(key: String, path: String) -> void:
-	var res: TowerData = load(path)
-	if res:
-		tower_datas[key] = res
+func _load_tower_resources(dir_path: String) -> void:
+	for path: String in _get_resource_paths(dir_path):
+		var res: TowerData = load(path) as TowerData
+		if res:
+			var key: String = res.tower_type if not res.tower_type.is_empty() else path.get_file().get_basename()
+			tower_datas[key] = res
 
-func _load_monster_data(key: String, path: String) -> void:
-	var res: MonsterData = load(path)
-	if res:
-		monster_datas[key] = res
+func _load_monster_resources(dir_path: String) -> void:
+	for path: String in _get_resource_paths(dir_path):
+		var res: MonsterData = load(path) as MonsterData
+		if res:
+			var key: String = res.monster_type if not res.monster_type.is_empty() else path.get_file().get_basename()
+			monster_datas[key] = res
 
-func _load_level_data(id: int, path: String) -> void:
-	var res: LevelData = load(path)
-	if res:
-		level_datas[id] = res
+func _load_level_resources(dir_path: String) -> void:
+	for path: String in _get_resource_paths(dir_path):
+		var res: LevelData = load(path) as LevelData
+		if res:
+			level_datas[res.level_id] = res
+
+func _get_resource_paths(dir_path: String) -> Array[String]:
+	var result: Array[String] = []
+	var dir: DirAccess = DirAccess.open(dir_path)
+	if not dir:
+		return result
+	dir.list_dir_begin()
+	var file_name: String = dir.get_next()
+	while file_name != "":
+		if not dir.current_is_dir():
+			var resource_name: String = file_name
+			if resource_name.ends_with(".remap"):
+				resource_name = resource_name.substr(0, resource_name.length() - ".remap".length())
+			if resource_name.ends_with(".tres"):
+				var path: String = "%s/%s" % [dir_path, resource_name]
+				if not result.has(path):
+					result.append(path)
+		file_name = dir.get_next()
+	dir.list_dir_end()
+	result.sort()
+	return result
 
 func start_battle(level_id: int) -> void:
 	current_level_id = level_id
