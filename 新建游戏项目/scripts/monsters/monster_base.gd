@@ -90,9 +90,10 @@ static func _load_single_frame_animation(frames: SpriteFrames, monster_type: Str
 		textures.append(texture)
 
 	for i in range(WALK_FRAME_COUNT):
+		var frame_texture: Texture2D = textures[i]
 		var frame: AtlasTexture = AtlasTexture.new()
-		frame.atlas = textures[i]
-		frame.region = Rect2(Vector2.ZERO, Vector2(textures[i].get_width(), textures[i].get_height()))
+		frame.atlas = frame_texture
+		frame.region = Rect2(0, 0, frame_texture.get_width(), frame_texture.get_height())
 		frame.filter_clip = true
 		frames.add_frame("walk", frame)
 	return true
@@ -171,7 +172,7 @@ static func _get_visible_frame_max_size(monster_type: String, frame_texture: Tex
 
 static func _get_sheet_frame_region(sheet: Texture2D, frame_index: int) -> Rect2:
 	var frame_width: float = sheet.get_width() / float(WALK_FRAME_COUNT)
-	return Rect2(Vector2(frame_width * frame_index, 0), Vector2(frame_width, sheet.get_height()))
+	return Rect2(frame_width * frame_index, 0, frame_width, sheet.get_height())
 
 func take_damage(amount: float) -> void:
 	if is_dead:
@@ -231,7 +232,7 @@ func _spawn_death_smoke() -> void:
 	effect.sprite_frames = _get_death_smoke_frames()
 	effect.animation = "smoke"
 	effect.global_position = global_position + DEATH_EFFECT_OFFSET
-	effect.scale = Vector2.ONE * 0.1
+	effect.scale = Vector2.ONE * 0.2
 	effect.z_index = 5
 	var root: Node = get_tree().current_scene
 	if root:

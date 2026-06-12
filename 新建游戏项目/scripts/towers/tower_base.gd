@@ -4,7 +4,7 @@ signal tower_selected(tower: Node2D)
 
 const PROJECTILE_SCRIPT: GDScript = preload("res://scripts/towers/projectile.gd")
 const BUILD_SPOT_TEXTURE: Texture2D = preload("res://assets/maps/build_spots/build_spot_base.png")
-const BUILD_SPOT_REGION := Rect2(204, 92, 1645, 981)
+const BUILD_SPOT_REGION := Rect2(102, 46, 822.5, 490.5)
 const TOWER_SPRITE_BASELINE_Y := 20.0
 const UPGRADE_HINT_SIZE := Vector2(20, 24)
 const UPGRADE_HINT_TOP_GAP := 6.0

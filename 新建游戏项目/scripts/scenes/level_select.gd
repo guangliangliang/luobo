@@ -9,7 +9,7 @@ const LEVEL_CARD_NORMAL: Texture2D = preload("res://assets/ui/level_select/level
 const LEVEL_CARD_HOVER: Texture2D = preload("res://assets/ui/level_select/level_card_hover.png")
 const LEVEL_CARD_LOCKED: Texture2D = preload("res://assets/ui/level_select/level_card_locked.png")
 const BATTLE_SCENE: PackedScene = preload("res://scenes/Battle.tscn")
-const BUTTON_REGION: Rect2 = Rect2(145, 350, 1245, 289)
+const BUTTON_REGION: Rect2 = Rect2(72.5, 175, 622.5, 144.5)
 const LEVEL_TEXT_NORMAL: Color = Color(0.28, 0.12, 0.02)
 const LEVEL_TEXT_HOVER: Color = Color(0.18, 0.08, 0.01)
 const LEVEL_TEXT_SELECTED: Color = Color(0.72, 0.26, 0.02)
@@ -157,10 +157,10 @@ func _make_menu_button_style(texture: Texture2D) -> StyleBoxTexture:
 	var style: StyleBoxTexture = StyleBoxTexture.new()
 	style.texture = atlas
 	style.draw_center = true
-	style.set_texture_margin(SIDE_LEFT, 56)
-	style.set_texture_margin(SIDE_RIGHT, 56)
-	style.set_texture_margin(SIDE_TOP, 20)
-	style.set_texture_margin(SIDE_BOTTOM, 20)
+	style.set_texture_margin(SIDE_LEFT, 28)
+	style.set_texture_margin(SIDE_RIGHT, 28)
+	style.set_texture_margin(SIDE_TOP, 10)
+	style.set_texture_margin(SIDE_BOTTOM, 10)
 	style.set_content_margin(SIDE_LEFT, 58)
 	style.set_content_margin(SIDE_RIGHT, 58)
 	style.set_content_margin(SIDE_TOP, 16)

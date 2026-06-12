@@ -16,7 +16,7 @@ const BUILD_MENU_SCRIPT: GDScript = preload("res://scripts/ui/build_menu.gd")
 const TOWER_MENU_SCRIPT: GDScript = preload("res://scripts/ui/tower_menu.gd")
 const SETTINGS_DIALOG_SCRIPT: GDScript = preload("res://scripts/ui/settings_dialog.gd")
 const LEVEL_INFO_DIALOG_SCRIPT: GDScript = preload("res://scripts/ui/level_info_dialog.gd")
-const BUILD_SPOT_REGION := Rect2(204, 92, 1645, 981)
+const BUILD_SPOT_REGION := Rect2(102, 46, 822.5, 490.5)
 const START_COUNTDOWN_SECONDS := 3
 const START_MESSAGE_DURATION := 0.2
 

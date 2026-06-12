@@ -7,9 +7,9 @@ const PROJECTILE_TEXTURES: Dictionary = {
 }
 
 const PROJECTILE_REGIONS: Dictionary = {
-	"arrow": Rect2(148, 340, 1641, 557),
-	"cannon": Rect2(628, 248, 789, 661),
-	"ice": Rect2(700, 196, 845, 797),
+	"arrow": Rect2(74, 170, 820.5, 278.5),
+	"cannon": Rect2(314, 124, 394.5, 330.5),
+	"ice": Rect2(350, 98, 422.5, 398.5),
 }
 
 const HIT_EFFECT_TEXTURES: Dictionary = {
@@ -207,11 +207,11 @@ static func _create_effect_frames(texture: Texture2D) -> SpriteFrames:
 func _get_hit_effect_scale() -> float:
 	match _tower_type:
 		"cannon":
-			return 0.11
+			return 0.22
 		"ice":
-			return 0.10
+			return 0.20
 		_:
-			return 0.1
+			return 0.2
 
 static func _make_atlas_texture(texture: Texture2D, region: Rect2) -> AtlasTexture:
 	var atlas: AtlasTexture = AtlasTexture.new()

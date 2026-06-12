@@ -6,7 +6,7 @@ const LOADING_TEXTURE: Texture2D = preload("res://assets/ui/menu/loading_icon_sh
 const BUTTON_NORMAL: Texture2D = preload("res://assets/ui/buttons/button_menu_normal.png")
 const BUTTON_HOVER: Texture2D = preload("res://assets/ui/buttons/button_menu_hover.png")
 const BUTTON_PRESSED: Texture2D = preload("res://assets/ui/buttons/button_menu_pressed.png")
-const BUTTON_REGION: Rect2 = Rect2(145, 350, 1245, 289)
+const BUTTON_REGION: Rect2 = Rect2(72.5, 175, 622.5, 144.5)
 
 var _loading_icon: Sprite2D
 var _loading_label: Label
@@ -45,7 +45,7 @@ func _setup_base_ui() -> void:
 	var logo: Sprite2D = Sprite2D.new()
 	logo.texture = LOGO_TEXTURE
 	logo.position = Vector2(viewport_size.x * 0.5, viewport_size.y * 0.32)
-	logo.scale = Vector2(0.215, 0.215)
+	logo.scale = Vector2(0.43, 0.43)
 	add_child(logo)
 
 func _setup_loading_ui() -> void:
@@ -138,10 +138,10 @@ func _make_button_style(texture: Texture2D) -> StyleBoxTexture:
 	var style: StyleBoxTexture = StyleBoxTexture.new()
 	style.texture = atlas
 	style.draw_center = true
-	style.set_texture_margin(SIDE_LEFT, 56)
-	style.set_texture_margin(SIDE_RIGHT, 56)
-	style.set_texture_margin(SIDE_TOP, 20)
-	style.set_texture_margin(SIDE_BOTTOM, 20)
+	style.set_texture_margin(SIDE_LEFT, 28)
+	style.set_texture_margin(SIDE_RIGHT, 28)
+	style.set_texture_margin(SIDE_TOP, 10)
+	style.set_texture_margin(SIDE_BOTTOM, 10)
 	style.set_content_margin(SIDE_LEFT, 58)
 	style.set_content_margin(SIDE_RIGHT, 58)
 	style.set_content_margin(SIDE_TOP, 16)
