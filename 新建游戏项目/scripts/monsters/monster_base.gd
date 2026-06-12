@@ -4,7 +4,7 @@ signal monster_died(reward: int)
 signal monster_reached_end
 
 const DEATH_SMOKE_SHEET: Texture2D = preload("res://assets/effects/新建文件夹/death_smoke_sheet.png")
-const WOLF_FRAME_COUNT: int = 4
+const WALK_FRAME_COUNT: int = 4
 const DEATH_EFFECT_OFFSET := Vector2(0, -18)
 const MAX_DEATH_SMOKE_EFFECTS := 2
 const DEATH_SMOKE_LIFETIME := 0.7
@@ -80,7 +80,7 @@ static func _get_walk_frames(monster_type: String) -> SpriteFrames:
 
 static func _load_single_frame_animation(frames: SpriteFrames, monster_type: String) -> bool:
 	var textures: Array[Texture2D] = []
-	for i in range(WOLF_FRAME_COUNT):
+	for i in range(WALK_FRAME_COUNT):
 		var path: String = "res://assets/monsters/%s/%s_walk_%02d.png" % [monster_type, monster_type, i + 1]
 		if not ResourceLoader.exists(path):
 			return false
@@ -89,10 +89,10 @@ static func _load_single_frame_animation(frames: SpriteFrames, monster_type: Str
 			return false
 		textures.append(texture)
 
-	for i in range(WOLF_FRAME_COUNT):
+	for i in range(WALK_FRAME_COUNT):
 		var frame: AtlasTexture = AtlasTexture.new()
 		frame.atlas = textures[i]
-		frame.region = _get_frame_region(monster_type, i)
+		frame.region = Rect2(Vector2.ZERO, Vector2(textures[i].get_width(), textures[i].get_height()))
 		frame.filter_clip = true
 		frames.add_frame("walk", frame)
 	return true
@@ -105,10 +105,10 @@ static func _load_sheet_animation(frames: SpriteFrames, monster_type: String) ->
 	if not sheet:
 		return false
 
-	for i in range(WOLF_FRAME_COUNT):
+	for i in range(WALK_FRAME_COUNT):
 		var frame: AtlasTexture = AtlasTexture.new()
 		frame.atlas = sheet
-		frame.region = _get_sheet_frame_region(monster_type, sheet, i)
+		frame.region = _get_sheet_frame_region(sheet, i)
 		frame.filter_clip = true
 		frames.add_frame("walk", frame)
 	return true
@@ -169,34 +169,9 @@ static func _get_visible_frame_max_size(monster_type: String, frame_texture: Tex
 	_visible_frame_size_cache[monster_type] = maxf(1.0, visible_size)
 	return float(_visible_frame_size_cache[monster_type])
 
-static func _get_sheet_frame_region(monster_type: String, sheet: Texture2D, frame_index: int) -> Rect2:
-	var frame_width: float = sheet.get_width() / float(WOLF_FRAME_COUNT)
+static func _get_sheet_frame_region(sheet: Texture2D, frame_index: int) -> Rect2:
+	var frame_width: float = sheet.get_width() / float(WALK_FRAME_COUNT)
 	return Rect2(Vector2(frame_width * frame_index, 0), Vector2(frame_width, sheet.get_height()))
-
-static func _get_frame_region(monster_type: String, frame_index: int) -> Rect2:
-	var regions: Dictionary = {
-		"wolf": [
-			Rect2(360, 188, 1308, 784),
-			Rect2(344, 200, 1212, 844),
-			Rect2(348, 164, 1176, 796),
-			Rect2(300, 224, 1312, 840),
-		],
-		"bandit": [
-			Rect2(720, 140, 728, 828),
-			Rect2(520, 180, 840, 824),
-			Rect2(728, 100, 680, 940),
-			Rect2(500, 172, 832, 864),
-		],
-		"bear": [
-			Rect2(556, 60, 916, 1024),
-			Rect2(456, 140, 1160, 968),
-			Rect2(496, 132, 1040, 968),
-			Rect2(448, 40, 1152, 1056),
-		],
-	}
-	if regions.has(monster_type):
-		return regions[monster_type][frame_index]
-	return Rect2(0, 0, 2048, 1152)
 
 func take_damage(amount: float) -> void:
 	if is_dead:
@@ -334,11 +309,6 @@ func _draw() -> void:
 		bar_y = VISUAL_OFFSET.y - _get_sprite_target_size(data.monster_type) * 0.65
 	draw_rect(Rect2(-bar_width / 2.0, bar_y, bar_width, bar_height), Color.RED)
 	draw_rect(Rect2(-bar_width / 2.0, bar_y, bar_width * health_pct, bar_height), Color.GREEN)
-
-	if not uses_sprite and data.monster_type == "bear":
-		draw_string(ThemeDB.fallback_font, Vector2(-12, 5), "B", HORIZONTAL_ALIGNMENT_CENTER, -1, 16, Color.WHITE)
-	elif not uses_sprite and data.monster_type == "bandit":
-		draw_string(ThemeDB.fallback_font, Vector2(-6, 4), "!", HORIZONTAL_ALIGNMENT_CENTER, -1, 14, Color.YELLOW)
 
 func _draw_slow_trails(uses_sprite: bool) -> void:
 	var body_size: float = _get_sprite_target_size(data.monster_type) if uses_sprite else data.body_radius * 2.0
