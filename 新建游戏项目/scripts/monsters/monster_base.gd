@@ -10,6 +10,8 @@ const MAX_DEATH_SMOKE_EFFECTS := 2
 const DEATH_SMOKE_LIFETIME := 0.7
 const SHOW_GOLD_POPUPS := true
 const VISUAL_OFFSET := Vector2(0, -8)
+const SPRITE_SCALE_MULTIPLIER := 1.2
+
 
 static var _death_smoke_frames_cache: SpriteFrames = null
 static var _walk_frames_cache: Dictionary = {}
@@ -50,7 +52,8 @@ func _setup_sprite() -> void:
 	sprite.sprite_frames = frames
 	var first_frame: Texture2D = frames.get_frame_texture("walk", 0)
 	var max_size: float = _get_visible_frame_max_size(data.monster_type, first_frame)
-	sprite.scale = Vector2.ONE * (_get_sprite_target_size(data.monster_type) / max_size)
+	sprite.scale = Vector2.ONE * (_get_sprite_target_size(data.monster_type) * SPRITE_SCALE_MULTIPLIER / max_size)
+
 	sprite.position = VISUAL_OFFSET
 	sprite.play("walk")
 
@@ -306,8 +309,10 @@ func _draw() -> void:
 	var bar_height: float = 4.0
 	var bar_y: float = VISUAL_OFFSET.y - data.body_radius - 10.0
 	if uses_sprite:
-		bar_width = _get_sprite_target_size(data.monster_type) * 0.8
-		bar_y = VISUAL_OFFSET.y - _get_sprite_target_size(data.monster_type) * 0.65
+		var sprite_size: float = _get_sprite_target_size(data.monster_type) * SPRITE_SCALE_MULTIPLIER
+		bar_width = sprite_size * 0.8
+		bar_y = VISUAL_OFFSET.y - sprite_size * 0.65
+
 	draw_rect(Rect2(-bar_width / 2.0, bar_y, bar_width, bar_height), Color.RED)
 	draw_rect(Rect2(-bar_width / 2.0, bar_y, bar_width * health_pct, bar_height), Color.GREEN)
 

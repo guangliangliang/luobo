@@ -62,4 +62,4 @@ build_spots = PackedVector2Array(120, 240, 120, 500, 340, 280, 340, 650, 610, 43
 waves = [SubResource("WaveData_wave1"), SubResource("WaveData_wave2"), SubResource("WaveData_wave3"), SubResource("WaveData_wave4"), SubResource("WaveData_wave5")]
 bg_color = Color(0.18, 0.32, 0.12, 1)
 path_color = Color(0.55, 0.4, 0.25, 1)
-path_width = 35.0
+path_width = 45.0
