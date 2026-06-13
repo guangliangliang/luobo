@@ -309,6 +309,7 @@ func _create_ui() -> void:
 	
 	_settings_dialog = Control.new()
 	_settings_dialog.name = "SettingsDialog"
+	_settings_dialog.z_index = 300
 	_settings_dialog.set_script(SETTINGS_DIALOG_SCRIPT)
 	canvas.add_child(_settings_dialog)
 	_settings_dialog.visible = false

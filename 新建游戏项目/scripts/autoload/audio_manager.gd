@@ -124,7 +124,7 @@ func _get_bgm_stream(name: String) -> AudioStream:
 			push_warning("Missing BGM stream: %s" % path)
 			return null
 		if stream is AudioStreamOggVorbis:
-			stream.loop = name == "menu" or name == "battle"
+			stream.loop = name in ["menu", "battle", "victory", "defeat"]
 		_bgm_streams[name] = stream
 	return _bgm_streams[name]
 

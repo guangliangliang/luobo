@@ -5,7 +5,7 @@ signal tower_selected(tower: Node2D)
 const PROJECTILE_SCRIPT: GDScript = preload("res://scripts/towers/projectile.gd")
 const BUILD_SPOT_TEXTURE: Texture2D = preload("res://assets/maps/build_spots/build_spot_base.png")
 const BUILD_SPOT_REGION := Rect2(102, 46, 822.5, 490.5)
-const TOWER_SPRITE_BASELINE_Y := 20.0
+const TOWER_BASE_ANCHOR_Y := 12.0
 const UPGRADE_HINT_SIZE := Vector2(20, 24)
 const UPGRADE_HINT_TOP_GAP := 6.0
 const INITIAL_ATTACK_STAGGER_MAX := 0.35
@@ -14,6 +14,7 @@ const NO_TARGET_SCAN_INTERVAL_MIN := 0.12
 const NO_TARGET_SCAN_INTERVAL_MAX := 0.22
 
 static var _tower_texture_cache: Dictionary = {}
+static var _tower_visible_rect_cache: Dictionary = {}
 
 var tower_data: TowerData
 var tower_level: int = 1
@@ -289,11 +290,13 @@ func _update_sprite_texture() -> void:
 		_sprite.visible = false
 		return
 	
+	var visible_rect: Rect2 = _get_tower_visible_rect(texture_path, texture)
 	var target_height: float = _get_tower_target_height()
 	var scale_factor: float = target_height / float(texture.get_height())
 	_sprite.texture = texture
 	_sprite.scale = Vector2.ONE * scale_factor
-	_sprite.position = Vector2(0, -texture.get_height() * scale_factor * 0.5 + TOWER_SPRITE_BASELINE_Y)
+	_sprite.offset = _get_tower_bottom_anchor_offset(texture, visible_rect)
+	_sprite.position = _get_tower_base_anchor_position()
 	_sprite.visible = true
 	_update_upgrade_icon_position()
 
@@ -301,6 +304,38 @@ func _get_tower_texture(texture_path: String) -> Texture2D:
 	if not _tower_texture_cache.has(texture_path):
 		_tower_texture_cache[texture_path] = load(texture_path) as Texture2D
 	return _tower_texture_cache[texture_path]
+
+func _get_tower_visible_rect(texture_path: String, texture: Texture2D) -> Rect2:
+	if not _tower_visible_rect_cache.has(texture_path):
+		_tower_visible_rect_cache[texture_path] = _scan_visible_texture_rect(texture)
+	return _tower_visible_rect_cache[texture_path]
+
+func _scan_visible_texture_rect(texture: Texture2D) -> Rect2:
+	var image: Image = texture.get_image()
+	if image == null or image.is_empty() or image.detect_alpha() == Image.ALPHA_NONE:
+		return Rect2(Vector2.ZERO, texture.get_size())
+	var width: int = image.get_width()
+	var height: int = image.get_height()
+	var min_x: int = width
+	var min_y: int = height
+	var max_x: int = -1
+	var max_y: int = -1
+	for y in range(height):
+		for x in range(width):
+			if image.get_pixel(x, y).a > 0.05:
+				min_x = mini(min_x, x)
+				min_y = mini(min_y, y)
+				max_x = maxi(max_x, x)
+				max_y = maxi(max_y, y)
+	if max_x < min_x or max_y < min_y:
+		return Rect2(Vector2.ZERO, texture.get_size())
+	return Rect2(min_x, min_y, max_x - min_x + 1, max_y - min_y + 1)
+
+func _get_tower_bottom_anchor_offset(texture: Texture2D, visible_rect: Rect2) -> Vector2:
+	return Vector2(
+		texture.get_width() * 0.5 - visible_rect.get_center().x,
+		texture.get_height() * 0.5 - visible_rect.end.y
+	)
 
 func _get_tower_texture_path() -> String:
 	return _get_tower_texture_path_for(tower_type, tower_level)
@@ -325,6 +360,9 @@ func _get_tower_target_height() -> float:
 		_:
 			return 58.0
 
+func _get_tower_base_anchor_position() -> Vector2:
+	return Vector2(0, TOWER_BASE_ANCHOR_Y)
+
 func is_click_in_area(click_pos: Vector2) -> bool:
 	var local_pos: Vector2 = to_local(click_pos)
 	return abs(local_pos.x) <= 25 and local_pos.y >= -55 and local_pos.y <= 10
@@ -340,7 +378,7 @@ func _setup_upgrade_icon() -> void:
 func _update_upgrade_icon_position() -> void:
 	if not _upgrade_icon:
 		return
-	var tower_top_y: float = TOWER_SPRITE_BASELINE_Y - _get_tower_target_height()
+	var tower_top_y: float = _get_tower_base_anchor_position().y - _get_tower_target_height()
 	_upgrade_icon.position = Vector2(
 		-UPGRADE_HINT_SIZE.x * 0.5,
 		tower_top_y - UPGRADE_HINT_SIZE.y - UPGRADE_HINT_TOP_GAP
