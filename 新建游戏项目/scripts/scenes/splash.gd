@@ -2,24 +2,14 @@ extends Node2D
 
 const MENU_BG: Texture2D = preload("res://assets/ui/menu/menu_bg_village.png")
 const LOGO_TEXTURE: Texture2D = preload("res://assets/ui/menu/logo_village_defense.png")
-const LOADING_TEXTURE: Texture2D = preload("res://assets/ui/menu/loading_icon_sheet.png")
 const BUTTON_NORMAL: Texture2D = preload("res://assets/ui/buttons/button_menu_normal.png")
 const BUTTON_HOVER: Texture2D = preload("res://assets/ui/buttons/button_menu_hover.png")
 const BUTTON_PRESSED: Texture2D = preload("res://assets/ui/buttons/button_menu_pressed.png")
 const BUTTON_REGION: Rect2 = Rect2(72.5, 175, 622.5, 144.5)
 
-var _loading_icon: Sprite2D
-var _loading_label: Label
-var _loading_timer: Timer
-var _loading_text_timer: Timer
-var _loading_frame: int = 0
-var _loading_dot_count: int = 1
-
 func _ready() -> void:
 	AudioManager.play_bgm("menu")
 	_setup_base_ui()
-	_setup_loading_ui()
-	await get_tree().create_timer(1.5).timeout
 	_show_main_menu_ui()
 
 func _get_viewport_size() -> Vector2:
@@ -48,46 +38,7 @@ func _setup_base_ui() -> void:
 	logo.scale = Vector2(0.43, 0.43)
 	add_child(logo)
 
-func _setup_loading_ui() -> void:
-	var viewport_size: Vector2 = _get_viewport_size()
-	_loading_icon = Sprite2D.new()
-	_loading_icon.texture = LOADING_TEXTURE
-	_loading_icon.region_enabled = true
-	_loading_icon.region_rect = Rect2(0, 0, 128, 128)
-	_loading_icon.position = Vector2(viewport_size.x * 0.5, viewport_size.y * 0.65)
-	_loading_icon.scale = Vector2(0.7, 0.7)
-	add_child(_loading_icon)
-
-	_loading_label = Label.new()
-	_loading_label.text = "加载中."
-	_loading_label.size = Vector2(240, 36)
-	_loading_label.position = Vector2(viewport_size.x * 0.5 - _loading_label.size.x * 0.5, viewport_size.y * 0.75)
-	_loading_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_loading_label.add_theme_font_size_override("font_size", 24)
-	_loading_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.45))
-	_loading_label.add_theme_color_override("font_shadow_color", Color(0.18, 0.1, 0.03, 0.9))
-	_loading_label.add_theme_constant_override("shadow_offset_x", 2)
-	_loading_label.add_theme_constant_override("shadow_offset_y", 2)
-	add_child(_loading_label)
-
-	_loading_timer = Timer.new()
-	_loading_timer.wait_time = 0.18
-	_loading_timer.autostart = true
-	_loading_timer.timeout.connect(_on_loading_frame_timeout)
-	add_child(_loading_timer)
-
-	_loading_text_timer = Timer.new()
-	_loading_text_timer.wait_time = 0.35
-	_loading_text_timer.autostart = true
-	_loading_text_timer.timeout.connect(_on_loading_text_timeout)
-	add_child(_loading_text_timer)
-
 func _show_main_menu_ui() -> void:
-	_loading_timer.queue_free()
-	_loading_text_timer.queue_free()
-	_loading_icon.queue_free()
-	_loading_label.queue_free()
-
 	var viewport_size: Vector2 = _get_viewport_size()
 	var menu_size := Vector2(330, 180)
 	var menu: VBoxContainer = VBoxContainer.new()
@@ -147,14 +98,6 @@ func _make_button_style(texture: Texture2D) -> StyleBoxTexture:
 	style.set_content_margin(SIDE_TOP, 16)
 	style.set_content_margin(SIDE_BOTTOM, 20)
 	return style
-
-func _on_loading_frame_timeout() -> void:
-	_loading_frame = (_loading_frame + 1) % 4
-	_loading_icon.region_rect = Rect2(_loading_frame * 128, 0, 128, 128)
-
-func _on_loading_text_timeout() -> void:
-	_loading_dot_count = _loading_dot_count % 3 + 1
-	_loading_label.text = "加载中" + ".".repeat(_loading_dot_count)
 
 func _on_start_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/LevelSelect.tscn")
