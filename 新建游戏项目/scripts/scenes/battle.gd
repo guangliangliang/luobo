@@ -343,13 +343,6 @@ func _create_ui() -> void:
 	canvas.add_child(_tower_menu)
 	_tower_menu.visible = false
 	
-	_settings_dialog = Control.new()
-	_settings_dialog.name = "SettingsDialog"
-	_settings_dialog.z_index = 300
-	_settings_dialog.set_script(SETTINGS_DIALOG_SCRIPT)
-	canvas.add_child(_settings_dialog)
-	_settings_dialog.visible = false
-	
 	_countdown_label = Label.new()
 	_countdown_label.name = "CountdownLabel"
 	_countdown_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -358,9 +351,14 @@ func _create_ui() -> void:
 	_countdown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_countdown_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_countdown_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_countdown_label.z_index = 200
 	canvas.add_child(_countdown_label)
 	_countdown_label.visible = false
+	
+	_settings_dialog = Control.new()
+	_settings_dialog.name = "SettingsDialog"
+	_settings_dialog.set_script(SETTINGS_DIALOG_SCRIPT)
+	canvas.add_child(_settings_dialog)
+	_settings_dialog.visible = false
 	
 	_level_info_dialog = Control.new()
 	_level_info_dialog.name = "LevelInfoDialog"

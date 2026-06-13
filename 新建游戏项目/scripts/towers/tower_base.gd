@@ -7,7 +7,7 @@ const BUILD_SPOT_TEXTURE: Texture2D = preload("res://assets/maps/build_spots/bui
 const BUILD_SPOT_REGION := Rect2(102, 46, 822.5, 490.5)
 const TOWER_BASE_ANCHOR_Y := 12.0
 const TOWER_VISUAL_SCALE := 1.5
-const UPGRADE_HINT_SIZE := Vector2(20, 24)
+const UPGRADE_HINT_SIZE := Vector2(38, 26)
 const UPGRADE_HINT_TOP_GAP := 6.0
 const INITIAL_ATTACK_STAGGER_MAX := 0.35
 const ATTACK_TIMER_JITTER := 0.04
@@ -394,21 +394,22 @@ func _update_upgrade_icon() -> void:
 		_upgrade_icon.visible = false
 		return
 	_ensure_upgrade_hint()
+	_upgrade_label.text = "↑%d" % (tower_level + 1)
 	_upgrade_icon.visible = true
 
 func _ensure_upgrade_hint() -> void:
 	if _upgrade_label:
 		return
 	_upgrade_label = Label.new()
-	_upgrade_label.text = "↑"
+	_upgrade_label.text = "↑%d" % (tower_level + 1)
 	_upgrade_label.size = UPGRADE_HINT_SIZE
 	_upgrade_label.custom_minimum_size = UPGRADE_HINT_SIZE
 	_upgrade_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_upgrade_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_upgrade_label.add_theme_font_size_override("font_size", 22)
-	_upgrade_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.25))
-	_upgrade_label.add_theme_color_override("font_outline_color", Color(0.08, 0.05, 0.02))
-	_upgrade_label.add_theme_constant_override("outline_size", 2)
+	_upgrade_label.add_theme_font_size_override("font_size", 23)
+	_upgrade_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.22))
+	_upgrade_label.add_theme_color_override("font_outline_color", Color(0.10, 0.06, 0.02))
+	_upgrade_label.add_theme_constant_override("outline_size", 3)
 	_upgrade_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_upgrade_icon.add_child(_upgrade_label)
 

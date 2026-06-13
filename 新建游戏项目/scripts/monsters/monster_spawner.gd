@@ -5,6 +5,7 @@ signal wave_complete
 signal monster_count_changed(count: int)
 
 const MONSTER_SCENE: PackedScene = preload("res://scenes/Monster.tscn")
+const MIN_SPAWN_INTERVAL := 0.6
 
 var _spawn_queue: Array[Dictionary] = []
 var _spawn_index: int = 0
@@ -80,7 +81,7 @@ func _append_spawn_entries(monster_type: String, count: int, interval: float, pa
 		_spawn_queue.append({
 			"monster_type": monster_type,
 			"path_index": path_indices[i % path_indices.size()],
-			"interval": interval,
+			"interval": maxf(interval, MIN_SPAWN_INTERVAL),
 		})
 
 func get_active_count() -> int:

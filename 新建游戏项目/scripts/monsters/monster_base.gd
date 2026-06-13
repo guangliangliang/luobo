@@ -314,8 +314,8 @@ func _draw() -> void:
 func _draw_slow_trails(uses_sprite: bool) -> void:
 	var body_size: float = _get_sprite_target_size(data.monster_type) if uses_sprite else data.body_radius * 2.0
 	var trail_alpha: float = clampf(0.35 + slow_timer * 0.12, 0.35, 0.75)
-	var trail_color := Color(1.0, 0.84, 0.18, trail_alpha)
-	var shadow_color := Color(0.35, 0.22, 0.02, trail_alpha * 0.45)
+	var trail_color := Color(0.55, 0.88, 1.0, trail_alpha)
+	var shadow_color := Color(0.05, 0.22, 0.35, trail_alpha * 0.45)
 	var base_y: float = VISUAL_OFFSET.y + body_size * 0.32
 	var point_a := Vector2(-body_size * 0.46, base_y)
 	var point_b := Vector2(-body_size * 0.30, base_y - 4.0)
