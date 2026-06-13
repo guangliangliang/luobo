@@ -115,6 +115,14 @@ func _make_tab_button(text: String) -> Button:
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", 21)
+	button.add_theme_stylebox_override("normal", _create_tab_stylebox(false))
+	button.add_theme_stylebox_override("hover", _create_tab_stylebox(true))
+	button.add_theme_stylebox_override("pressed", _create_tab_stylebox(true))
+	button.add_theme_stylebox_override("disabled", _create_tab_stylebox(true))
+	button.add_theme_color_override("font_color", Color(0.86, 0.90, 0.98))
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_color_override("font_pressed_color", Color.WHITE)
+	button.add_theme_color_override("font_disabled_color", Color(0.18, 0.11, 0.02))
 	return button
 
 func _make_avatar_button(label_text: String, image_path: String, selected: bool) -> Button:
@@ -126,7 +134,6 @@ func _make_avatar_button(label_text: String, image_path: String, selected: bool)
 	button.add_theme_stylebox_override("hover", _create_avatar_stylebox(true))
 	button.add_theme_stylebox_override("pressed", _create_avatar_stylebox(true))
 	button.add_theme_stylebox_override("disabled", _create_avatar_stylebox(true))
-	button.disabled = selected
 
 	var margin: MarginContainer = MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -174,7 +181,7 @@ func _show_enemy_tab() -> void:
 	var monster_types: Array = _get_current_level_monster_types()
 	if monster_types.is_empty():
 		monster_types = GameManager.monster_datas.keys()
-	monster_types.sort()
+	_sort_monster_types(monster_types)
 	if not monster_types.has(_selected_monster_type):
 		_selected_monster_type = str(monster_types[0]) if not monster_types.is_empty() else ""
 	_refresh_selectors(monster_types)
@@ -183,8 +190,10 @@ func _show_enemy_tab() -> void:
 func _refresh_tabs() -> void:
 	if not _tower_tab_btn or not _enemy_tab_btn:
 		return
-	_tower_tab_btn.disabled = _active_tab == "tower"
-	_enemy_tab_btn.disabled = _active_tab == "enemy"
+	_tower_tab_btn.add_theme_stylebox_override("normal", _create_tab_stylebox(_active_tab == "tower"))
+	_enemy_tab_btn.add_theme_stylebox_override("normal", _create_tab_stylebox(_active_tab == "enemy"))
+	_tower_tab_btn.add_theme_color_override("font_color", Color(0.18, 0.11, 0.02) if _active_tab == "tower" else Color(0.86, 0.90, 0.98))
+	_enemy_tab_btn.add_theme_color_override("font_color", Color(0.18, 0.11, 0.02) if _active_tab == "enemy" else Color(0.86, 0.90, 0.98))
 
 func _clear_content() -> void:
 	if not _content_list:
@@ -230,7 +239,7 @@ func _select_enemy(monster_type: String) -> void:
 	var monster_types: Array = _get_current_level_monster_types()
 	if monster_types.is_empty():
 		monster_types = GameManager.monster_datas.keys()
-	monster_types.sort()
+	_sort_monster_types(monster_types)
 	_refresh_selectors(monster_types)
 	_show_selected_enemy()
 
@@ -419,6 +428,31 @@ func _get_current_level_monster_types() -> Array:
 			result.append(wave.support_monster_type)
 	return result
 
+func _sort_monster_types(monster_types: Array) -> void:
+	monster_types.sort_custom(_compare_monster_types)
+
+func _compare_monster_types(a: String, b: String) -> bool:
+	var data_a: MonsterData = GameManager.get_monster_data(a)
+	var data_b: MonsterData = GameManager.get_monster_data(b)
+	var group_a: int = _monster_sort_group(a, data_a)
+	var group_b: int = _monster_sort_group(b, data_b)
+	if group_a != group_b:
+		return group_a < group_b
+	var size_a: float = data_a.body_radius if data_a else 0.0
+	var size_b: float = data_b.body_radius if data_b else 0.0
+	if not is_equal_approx(size_a, size_b):
+		return size_a > size_b
+	return a < b
+
+func _monster_sort_group(monster_type: String, data: MonsterData) -> int:
+	if data and (data.monster_category == "首领" or data.monster_category == "重甲"):
+		return 0
+	match monster_type:
+		"thief", "robber", "mountain_bandit", "shield_bandit", "bandit_leader":
+			return 0
+		_:
+			return 1
+
 func _tower_image_path(tower_type: String, level_index: int = 0) -> String:
 	var level: int = clampi(level_index + 1, 1, 3)
 	match tower_type:
@@ -536,18 +570,38 @@ func _create_selector_panel_stylebox() -> StyleBoxFlat:
 	style.border_color = Color(0.26, 0.31, 0.39)
 	return style
 
+func _create_tab_stylebox(selected: bool) -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(1.0, 0.74, 0.22, 1.0) if selected else Color(0.17, 0.20, 0.27, 0.96)
+	style.corner_radius_top_left = 12
+	style.corner_radius_top_right = 12
+	style.corner_radius_bottom_left = 12
+	style.corner_radius_bottom_right = 12
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(1.0, 0.90, 0.46) if selected else Color(0.36, 0.43, 0.55)
+	style.shadow_color = Color(1.0, 0.54, 0.12, 0.36) if selected else Color(0, 0, 0, 0.22)
+	style.shadow_size = 8 if selected else 3
+	style.shadow_offset = Vector2(0, 2)
+	return style
+
 func _create_avatar_stylebox(selected: bool) -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.24, 0.29, 0.36, 0.96) if selected else Color(0.16, 0.18, 0.23, 0.95)
-	style.corner_radius_top_left = 8
-	style.corner_radius_top_right = 8
-	style.corner_radius_bottom_left = 8
-	style.corner_radius_bottom_right = 8
-	style.border_width_left = 2 if selected else 1
-	style.border_width_top = 2 if selected else 1
-	style.border_width_right = 2 if selected else 1
-	style.border_width_bottom = 2 if selected else 1
-	style.border_color = Color(1.0, 0.78, 0.28) if selected else Color(0.34, 0.40, 0.49)
+	style.bg_color = Color(0.42, 0.30, 0.12, 1.0) if selected else Color(0.16, 0.18, 0.23, 0.95)
+	style.corner_radius_top_left = 10
+	style.corner_radius_top_right = 10
+	style.corner_radius_bottom_left = 10
+	style.corner_radius_bottom_right = 10
+	style.border_width_left = 3 if selected else 1
+	style.border_width_top = 3 if selected else 1
+	style.border_width_right = 3 if selected else 1
+	style.border_width_bottom = 3 if selected else 1
+	style.border_color = Color(1.0, 0.82, 0.28) if selected else Color(0.34, 0.40, 0.49)
+	style.shadow_color = Color(1.0, 0.58, 0.10, 0.44) if selected else Color(0, 0, 0, 0.20)
+	style.shadow_size = 10 if selected else 2
+	style.shadow_offset = Vector2(0, 2)
 	return style
 
 func _create_level_stylebox() -> StyleBoxFlat:
