@@ -34,6 +34,7 @@ var _selected_build_position: Vector2 = Vector2.ZERO
 var _map_drawer: Node2D
 var _village_drawer: Node2D
 var _village_health_label: Label
+var _village_health_bar: ProgressBar
 var _build_spot_sprites: Dictionary = {}
 var _selected_tower: Node2D = null
 var _is_paused: bool = false
@@ -121,17 +122,17 @@ func _draw_village() -> void:
 	var village_texture: AtlasTexture = _make_atlas_texture(raw_village_texture, _get_visible_texture_region(raw_village_texture))
 	var village_sprite: Sprite2D = Sprite2D.new()
 	village_sprite.texture = village_texture
-	village_sprite.scale = Vector2.ONE * (118.0 / village_texture.get_height())
-	village_sprite.position = Vector2(0, -32)
+	village_sprite.scale = Vector2.ONE * (236.0 / village_texture.get_height())
+	village_sprite.position = Vector2(0, -64)
 	village_sprite.z_index = 8
 	_village_drawer.add_child(village_sprite)
 	_create_village_health_marker()
 
 func _create_village_health_marker() -> void:
 	var marker: PanelContainer = PanelContainer.new()
-	marker.position = Vector2(-58, -126)
-	marker.size = Vector2(116, 34)
-	marker.custom_minimum_size = Vector2(116, 34)
+	marker.position = Vector2(-78, -190)
+	marker.size = Vector2(156, 48)
+	marker.custom_minimum_size = Vector2(156, 48)
 	marker.z_index = 20
 	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	marker.add_theme_stylebox_override("panel", _create_village_health_stylebox())
@@ -139,21 +140,27 @@ func _create_village_health_marker() -> void:
 
 	var margin: MarginContainer = MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_top", 4)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_bottom", 4)
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_bottom", 7)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	marker.add_child(margin)
+
+	var box: VBoxContainer = VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 2)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(box)
 
 	var row: HBoxContainer = HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 5)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_child(row)
+	box.add_child(row)
 
 	var icon: TextureRect = TextureRect.new()
-	icon.custom_minimum_size = Vector2(22, 22)
+	icon.custom_minimum_size = Vector2(20, 20)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.texture = HEALTH_ICON
@@ -163,29 +170,55 @@ func _create_village_health_marker() -> void:
 	_village_health_label = Label.new()
 	_village_health_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_village_health_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_village_health_label.add_theme_font_size_override("font_size", 17)
-	_village_health_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.88))
-	_village_health_label.add_theme_color_override("font_outline_color", Color(0.16, 0.03, 0.02))
+	_village_health_label.add_theme_font_size_override("font_size", 16)
+	_village_health_label.add_theme_color_override("font_color", Color(1.0, 0.93, 0.88))
+	_village_health_label.add_theme_color_override("font_outline_color", Color(0.14, 0.03, 0.02))
 	_village_health_label.add_theme_constant_override("outline_size", 2)
 	_village_health_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(_village_health_label)
+
+	_village_health_bar = ProgressBar.new()
+	_village_health_bar.custom_minimum_size = Vector2(128, 10)
+	_village_health_bar.show_percentage = false
+	_village_health_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_village_health_bar.add_theme_stylebox_override("background", _create_village_health_bar_bg_stylebox())
+	_village_health_bar.add_theme_stylebox_override("fill", _create_village_health_bar_fill_stylebox())
+	box.add_child(_village_health_bar)
 	_update_village_health_marker()
 
 func _create_village_health_stylebox() -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.16, 0.04, 0.03, 0.88)
-	style.corner_radius_top_left = 8
-	style.corner_radius_top_right = 8
-	style.corner_radius_bottom_left = 8
-	style.corner_radius_bottom_right = 8
-	style.border_width_left = 1
-	style.border_width_top = 1
-	style.border_width_right = 1
-	style.border_width_bottom = 1
-	style.border_color = Color(0.95, 0.33, 0.25)
-	style.shadow_color = Color(0, 0, 0, 0.38)
-	style.shadow_size = 6
-	style.shadow_offset = Vector2(0, 2)
+	style.bg_color = Color(0.18, 0.07, 0.04, 0.92)
+	style.corner_radius_top_left = 10
+	style.corner_radius_top_right = 10
+	style.corner_radius_bottom_left = 10
+	style.corner_radius_bottom_right = 10
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.95, 0.62, 0.32)
+	style.shadow_color = Color(0, 0, 0, 0.45)
+	style.shadow_size = 8
+	style.shadow_offset = Vector2(0, 3)
+	return style
+
+func _create_village_health_bar_bg_stylebox() -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.09, 0.02, 0.02, 0.9)
+	style.corner_radius_top_left = 5
+	style.corner_radius_top_right = 5
+	style.corner_radius_bottom_left = 5
+	style.corner_radius_bottom_right = 5
+	return style
+
+func _create_village_health_bar_fill_stylebox() -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.92, 0.18, 0.12)
+	style.corner_radius_top_left = 5
+	style.corner_radius_top_right = 5
+	style.corner_radius_bottom_left = 5
+	style.corner_radius_bottom_right = 5
 	return style
 
 func _update_village_health_marker() -> void:
@@ -193,6 +226,9 @@ func _update_village_health_marker() -> void:
 		return
 	var max_health: int = maxi(GameManager.max_village_health, GameManager.village_health)
 	_village_health_label.text = "%d/%d" % [GameManager.village_health, max_health]
+	if _village_health_bar:
+		_village_health_bar.max_value = max_health
+		_village_health_bar.value = GameManager.village_health
 
 func _draw_build_spots() -> void:
 	_build_spot_sprites.clear()
@@ -201,7 +237,7 @@ func _draw_build_spots() -> void:
 		var spot_sprite: Sprite2D = Sprite2D.new()
 		spot_sprite.texture = spot_texture
 		spot_sprite.position = spot.position
-		spot_sprite.scale = Vector2.ONE * (62.0 / maxf(spot_texture.get_width(), spot_texture.get_height()))
+		spot_sprite.scale = Vector2.ONE * (93.0 / maxf(spot_texture.get_width(), spot_texture.get_height()))
 		spot_sprite.z_index = -3
 		_map_drawer.add_child(spot_sprite)
 		_build_spot_sprites[int(spot.index)] = spot_sprite

@@ -6,6 +6,7 @@ const PROJECTILE_SCRIPT: GDScript = preload("res://scripts/towers/projectile.gd"
 const BUILD_SPOT_TEXTURE: Texture2D = preload("res://assets/maps/build_spots/build_spot_base.png")
 const BUILD_SPOT_REGION := Rect2(102, 46, 822.5, 490.5)
 const TOWER_BASE_ANCHOR_Y := 12.0
+const TOWER_VISUAL_SCALE := 1.5
 const UPGRADE_HINT_SIZE := Vector2(20, 24)
 const UPGRADE_HINT_TOP_GAP := 6.0
 const INITIAL_ATTACK_STAGGER_MAX := 0.35
@@ -220,7 +221,7 @@ func _get_projectile_start_position() -> Vector2:
 	if tower_type != "cannon" or not _target or not is_instance_valid(_target):
 		return global_position
 	var dir: Vector2 = (_target.global_position - global_position).normalized()
-	return global_position + dir * 34.0
+	return global_position + dir * 51.0
 
 func _draw() -> void:
 	if _show_range:
@@ -265,8 +266,8 @@ func _setup_base_sprite() -> void:
 	_base_sprite.name = "BaseSprite"
 	_base_sprite.texture = _make_base_texture()
 	_base_sprite.centered = true
-	_base_sprite.position = Vector2(0, 12)
-	_base_sprite.scale = Vector2.ONE * (62.0 / maxf(_base_sprite.texture.get_width(), _base_sprite.texture.get_height()))
+	_base_sprite.position = Vector2(0, -4)
+	_base_sprite.scale = Vector2.ONE * (93.0 / maxf(_base_sprite.texture.get_width(), _base_sprite.texture.get_height()))
 	_base_sprite.z_index = -1
 	add_child(_base_sprite)
 
@@ -294,7 +295,7 @@ func _update_sprite_texture() -> void:
 	var target_height: float = _get_tower_target_height()
 	var scale_factor: float = target_height / float(texture.get_height())
 	_sprite.texture = texture
-	_sprite.scale = Vector2.ONE * scale_factor
+	_sprite.scale = Vector2.ONE * scale_factor * TOWER_VISUAL_SCALE
 	_sprite.offset = _get_tower_bottom_anchor_offset(texture, visible_rect)
 	_sprite.position = _get_tower_base_anchor_position()
 	_sprite.visible = true
@@ -365,7 +366,7 @@ func _get_tower_base_anchor_position() -> Vector2:
 
 func is_click_in_area(click_pos: Vector2) -> bool:
 	var local_pos: Vector2 = to_local(click_pos)
-	return abs(local_pos.x) <= 25 and local_pos.y >= -55 and local_pos.y <= 10
+	return abs(local_pos.x) <= 38 and local_pos.y >= -82 and local_pos.y <= 18
 
 func _setup_upgrade_icon() -> void:
 	_upgrade_icon = Node2D.new()
@@ -378,7 +379,7 @@ func _setup_upgrade_icon() -> void:
 func _update_upgrade_icon_position() -> void:
 	if not _upgrade_icon:
 		return
-	var tower_top_y: float = _get_tower_base_anchor_position().y - _get_tower_target_height()
+	var tower_top_y: float = _get_tower_base_anchor_position().y - _get_tower_target_height() * TOWER_VISUAL_SCALE
 	_upgrade_icon.position = Vector2(
 		-UPGRADE_HINT_SIZE.x * 0.5,
 		tower_top_y - UPGRADE_HINT_SIZE.y - UPGRADE_HINT_TOP_GAP

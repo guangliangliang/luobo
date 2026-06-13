@@ -25,11 +25,24 @@ func _setup_ui() -> void:
 	top_center.z_index = 100
 	add_child(top_center)
 
+	var sign_panel: PanelContainer = PanelContainer.new()
+	sign_panel.add_theme_stylebox_override("panel", _make_wood_sign_stylebox())
+	sign_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top_center.add_child(sign_panel)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 24)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_right", 24)
+	margin.add_theme_constant_override("margin_bottom", 10)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sign_panel.add_child(margin)
+
 	var h_box: HBoxContainer = HBoxContainer.new()
 	h_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	h_box.add_theme_constant_override("separation", 20)
+	h_box.add_theme_constant_override("separation", 18)
 	h_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top_center.add_child(h_box)
+	margin.add_child(h_box)
 
 	_gold_label = _make_hud_label(Color(1.0, 0.86, 0.25))
 	h_box.add_child(_gold_label)
@@ -44,6 +57,23 @@ func _setup_ui() -> void:
 	_settings_btn = _make_hud_button("设置")
 	_settings_btn.pressed.connect(func(): settings_pressed.emit())
 	h_box.add_child(_settings_btn)
+
+func _make_wood_sign_stylebox() -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.47, 0.26, 0.11, 0.92)
+	style.corner_radius_top_left = 12
+	style.corner_radius_top_right = 12
+	style.corner_radius_bottom_left = 12
+	style.corner_radius_bottom_right = 12
+	style.border_width_left = 3
+	style.border_width_top = 3
+	style.border_width_right = 3
+	style.border_width_bottom = 3
+	style.border_color = Color(0.86, 0.56, 0.28)
+	style.shadow_color = Color(0, 0, 0, 0.36)
+	style.shadow_size = 9
+	style.shadow_offset = Vector2(0, 4)
+	return style
 
 func _make_hud_label(color: Color) -> Label:
 	var label: Label = Label.new()
