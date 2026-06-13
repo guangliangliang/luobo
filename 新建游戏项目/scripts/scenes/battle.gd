@@ -130,7 +130,7 @@ func _draw_village() -> void:
 
 func _create_village_health_marker() -> void:
 	var marker: PanelContainer = PanelContainer.new()
-	marker.position = Vector2(-78, -190)
+	marker.position = Vector2(-78, -230)
 	marker.size = Vector2(156, 48)
 	marker.custom_minimum_size = Vector2(156, 48)
 	marker.z_index = 20

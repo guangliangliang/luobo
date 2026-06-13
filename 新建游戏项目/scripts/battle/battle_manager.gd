@@ -18,6 +18,7 @@ func setup(level_data: LevelData, spawner: Node, wave_mgr: Node, build_mgr: Node
 func _on_all_waves_completed() -> void:
 	if _result_shown:
 		return
+	_result_shown = true
 	GameManager.is_battle_active = false
 	AudioManager.play_bgm("victory", true)
 	AudioManager.play_sfx("victory")
@@ -27,13 +28,13 @@ func _on_all_waves_completed() -> void:
 func _on_game_lost() -> void:
 	if _result_shown:
 		return
+	_result_shown = true
 	AudioManager.play_bgm("defeat", true)
 	AudioManager.play_sfx("defeat")
 	await get_tree().create_timer(1.5).timeout
 	_show_result(false)
 
 func _show_result(won: bool) -> void:
-	_result_shown = true
 	if won:
 		SaveManager.unlock_next_level(_level_data.level_id)
 	SaveManager.update_best_score(GameManager.kill_count * 10 + GameManager.total_gold_earned)

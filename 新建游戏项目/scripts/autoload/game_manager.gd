@@ -100,6 +100,8 @@ func spend_gold(amount: int) -> bool:
 	return true
 
 func take_village_damage(amount: int) -> void:
+	if not is_battle_active:
+		return
 	village_health = max(0, village_health - amount)
 	village_health_changed.emit(village_health)
 	if village_health <= 0:

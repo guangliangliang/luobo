@@ -8,7 +8,7 @@ const WALK_FRAME_COUNT: int = 4
 const DEATH_EFFECT_OFFSET := Vector2(0, -18)
 const MAX_DEATH_SMOKE_EFFECTS := 2
 const DEATH_SMOKE_LIFETIME := 0.7
-const SHOW_GOLD_POPUPS := false
+const SHOW_GOLD_POPUPS := true
 const VISUAL_OFFSET := Vector2(0, -8)
 
 static var _death_smoke_frames_cache: SpriteFrames = null
