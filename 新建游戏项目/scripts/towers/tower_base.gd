@@ -4,9 +4,15 @@ signal tower_selected(tower: Node2D)
 
 const PROJECTILE_SCRIPT: GDScript = preload("res://scripts/towers/projectile.gd")
 const BUILD_SPOT_TEXTURE: Texture2D = preload("res://assets/maps/build_spots/build_spot_base.png")
+const CANNON_MOUNT_TEXTURE: Texture2D = preload("res://assets/towers/cannon_mount_base.png")
 const BUILD_SPOT_REGION := Rect2(102, 46, 822.5, 490.5)
 const TOWER_BASE_ANCHOR_Y := 12.0
 const TOWER_VISUAL_SCALE := 1.5
+const CANNON_MOUNT_WIDTH := 96.0
+const CANNON_TEXTURE_FRAME_SIZE := 512.0
+const CANNON_PIVOT_POSITION := Vector2.ZERO
+const CANNON_MOUNT_TURNTABLE_CENTER := Vector2(96.0, 57.0)
+const CANNON_MOUNT_OFFSET := Vector2.ZERO
 const UPGRADE_HINT_SIZE := Vector2(38, 26)
 const UPGRADE_HINT_TOP_GAP := 6.0
 const INITIAL_ATTACK_STAGGER_MAX := 0.35
@@ -29,6 +35,7 @@ var _battle_root: Node = null
 var _spawner: Node = null
 var _sprite: Sprite2D = null
 var _base_sprite: Sprite2D = null
+var _cannon_mount_sprite: Sprite2D = null
 var _upgrade_icon: Node2D = null
 var _upgrade_label: Label = null
 var _entrance_points: PackedVector2Array = []
@@ -49,6 +56,7 @@ func setup(type: String, data: TowerData) -> void:
 	_battle_root = get_tree().current_scene if is_inside_tree() else null
 	_spawner = _find_spawner()
 	_setup_base_sprite()
+	_setup_cannon_mount_sprite()
 	_setup_sprite()
 	_setup_upgrade_icon()
 	if not GameManager.gold_changed.is_connected(_on_gold_changed):
@@ -184,7 +192,7 @@ func _shoot() -> void:
 		return
 	
 	var projectile_start: Vector2 = _get_projectile_start_position()
-	_aim_sprite_from_position(_target.global_position, projectile_start)
+	_aim_sprite_from_position(_target.global_position, _get_cannon_rotation_origin_global_position())
 	var projectile: Node2D = Node2D.new()
 	projectile.process_mode = Node.PROCESS_MODE_PAUSABLE
 	projectile.set_script(PROJECTILE_SCRIPT)
@@ -204,7 +212,7 @@ func _shoot() -> void:
 	AudioManager.play_sfx("attack_" + tower_type)
 
 func _aim_sprite_at_position(target_position: Vector2) -> void:
-	_aim_sprite_from_position(target_position, global_position)
+	_aim_sprite_from_position(target_position, _get_cannon_rotation_origin_global_position())
 
 func _aim_sprite_from_position(target_position: Vector2, from_position: Vector2) -> void:
 	if not _sprite or tower_type != "cannon":
@@ -220,8 +228,14 @@ func _get_up_facing_rotation(dir: Vector2) -> float:
 func _get_projectile_start_position() -> Vector2:
 	if tower_type != "cannon" or not _target or not is_instance_valid(_target):
 		return global_position
-	var dir: Vector2 = (_target.global_position - global_position).normalized()
-	return global_position + dir * 51.0
+	var rotation_origin: Vector2 = _get_cannon_rotation_origin_global_position()
+	var dir: Vector2 = (_target.global_position - rotation_origin).normalized()
+	return rotation_origin + dir * 51.0
+
+func _get_cannon_rotation_origin_global_position() -> Vector2:
+	if tower_type != "cannon":
+		return global_position
+	return to_global(_get_tower_base_anchor_position())
 
 func _draw() -> void:
 	if _show_range:
@@ -271,6 +285,26 @@ func _setup_base_sprite() -> void:
 	_base_sprite.z_index = -1
 	add_child(_base_sprite)
 
+func _setup_cannon_mount_sprite() -> void:
+	if tower_type != "cannon":
+		return
+	_cannon_mount_sprite = Sprite2D.new()
+	_cannon_mount_sprite.name = "CannonMountSprite"
+	_cannon_mount_sprite.texture = CANNON_MOUNT_TEXTURE
+	_cannon_mount_sprite.centered = true
+	_cannon_mount_sprite.scale = Vector2.ONE * _get_cannon_mount_scale()
+	_cannon_mount_sprite.position = _get_cannon_mount_position()
+	_cannon_mount_sprite.z_index = 0
+	add_child(_cannon_mount_sprite)
+
+func _get_cannon_mount_scale() -> float:
+	return CANNON_MOUNT_WIDTH / CANNON_MOUNT_TEXTURE.get_width()
+
+func _get_cannon_mount_position() -> Vector2:
+	var texture_center: Vector2 = CANNON_MOUNT_TEXTURE.get_size() * 0.5
+	var turntable_offset: Vector2 = (CANNON_MOUNT_TURNTABLE_CENTER - texture_center) * _get_cannon_mount_scale()
+	return CANNON_PIVOT_POSITION - turntable_offset + CANNON_MOUNT_OFFSET
+
 func _make_base_texture() -> AtlasTexture:
 	var atlas: AtlasTexture = AtlasTexture.new()
 	atlas.atlas = BUILD_SPOT_TEXTURE
@@ -293,10 +327,16 @@ func _update_sprite_texture() -> void:
 	
 	var visible_rect: Rect2 = _get_tower_visible_rect(texture_path, texture)
 	var target_height: float = _get_tower_target_height()
-	var scale_factor: float = target_height / float(texture.get_height())
+	var source_height: float = CANNON_TEXTURE_FRAME_SIZE if tower_type == "cannon" else float(texture.get_height())
+	var scale_factor: float = target_height / source_height
 	_sprite.texture = texture
 	_sprite.scale = Vector2.ONE * scale_factor * TOWER_VISUAL_SCALE
-	_sprite.offset = _get_tower_bottom_anchor_offset(texture, visible_rect)
+	if tower_type == "cannon":
+		_sprite.centered = false
+		_sprite.offset = -_get_cannon_tail_anchor(visible_rect)
+	else:
+		_sprite.centered = true
+		_sprite.offset = _get_tower_bottom_anchor_offset(texture, visible_rect)
 	_sprite.position = _get_tower_base_anchor_position()
 	_sprite.visible = true
 	_update_upgrade_icon_position()
@@ -338,6 +378,9 @@ func _get_tower_bottom_anchor_offset(texture: Texture2D, visible_rect: Rect2) ->
 		texture.get_height() * 0.5 - visible_rect.end.y
 	)
 
+func _get_cannon_tail_anchor(visible_rect: Rect2) -> Vector2:
+	return Vector2(visible_rect.get_center().x, visible_rect.end.y)
+
 func _get_tower_texture_path() -> String:
 	return _get_tower_texture_path_for(tower_type, tower_level)
 
@@ -362,6 +405,8 @@ func _get_tower_target_height() -> float:
 			return 58.0
 
 func _get_tower_base_anchor_position() -> Vector2:
+	if tower_type == "cannon":
+		return CANNON_PIVOT_POSITION
 	return Vector2(0, TOWER_BASE_ANCHOR_Y)
 
 func is_click_in_area(click_pos: Vector2) -> bool:
