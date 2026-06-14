@@ -10,9 +10,9 @@ const TOWER_BASE_ANCHOR_Y := 12.0
 const TOWER_VISUAL_SCALE := 1.5
 const CANNON_MOUNT_WIDTH := 96.0
 const CANNON_TEXTURE_FRAME_SIZE := 512.0
-const CANNON_PIVOT_POSITION := Vector2.ZERO
 const CANNON_MOUNT_TURNTABLE_CENTER := Vector2(96.0, 57.0)
-const CANNON_MOUNT_OFFSET := Vector2.ZERO
+const CANNON_MOUNT_BOTTOM_CENTER := Vector2(94.5, 106.0)
+const CANNON_MOUNT_OFFSET := Vector2(0, 2)
 const UPGRADE_HINT_SIZE := Vector2(38, 26)
 const UPGRADE_HINT_TOP_GAP := 6.0
 const INITIAL_ATTACK_STAGGER_MAX := 0.35
@@ -159,6 +159,7 @@ func _find_target() -> void:
 		return
 	var monsters: Array = spawner.get_all_monsters()
 	var best_progress: float = -1.0
+	var attack_origin: Vector2 = _get_attack_origin_global_position()
 	var range_squared: float = _attack_range_squared
 	if range_squared <= 0.0:
 		var attack_range: float = get_attack_range()
@@ -167,7 +168,7 @@ func _find_target() -> void:
 	for monster in monsters:
 		if not is_instance_valid(monster) or monster.is_dead:
 			continue
-		var dist_squared: float = global_position.distance_squared_to(monster.global_position)
+		var dist_squared: float = attack_origin.distance_squared_to(monster.global_position)
 		if dist_squared <= range_squared:
 			if monster.progress_ratio > best_progress:
 				best_progress = monster.progress_ratio
@@ -237,10 +238,16 @@ func _get_cannon_rotation_origin_global_position() -> Vector2:
 		return global_position
 	return to_global(_get_tower_base_anchor_position())
 
+func _get_attack_origin_global_position() -> Vector2:
+	if tower_type == "cannon":
+		return _get_cannon_rotation_origin_global_position()
+	return global_position
+
 func _draw() -> void:
 	if _show_range:
-		draw_colored_polygon(_range_circle_points, Color(1, 1, 1, 0.1))
-		draw_polyline(_range_circle_points, Color(1, 1, 1, 0.3), 1.0)
+		var range_points: PackedVector2Array = _get_range_circle_draw_points()
+		draw_colored_polygon(range_points, Color(1, 1, 1, 0.1))
+		draw_polyline(range_points, Color(1, 1, 1, 0.3), 1.0)
 	
 	if _sprite and _sprite.visible:
 		return
@@ -303,7 +310,15 @@ func _get_cannon_mount_scale() -> float:
 func _get_cannon_mount_position() -> Vector2:
 	var texture_center: Vector2 = CANNON_MOUNT_TEXTURE.get_size() * 0.5
 	var turntable_offset: Vector2 = (CANNON_MOUNT_TURNTABLE_CENTER - texture_center) * _get_cannon_mount_scale()
-	return CANNON_PIVOT_POSITION - turntable_offset + CANNON_MOUNT_OFFSET
+	return _get_cannon_pivot_position() - turntable_offset
+
+func _get_cannon_pivot_position() -> Vector2:
+	var mount_scale: float = _get_cannon_mount_scale()
+	var pivot_to_bottom: Vector2 = (CANNON_MOUNT_BOTTOM_CENTER - CANNON_MOUNT_TURNTABLE_CENTER) * mount_scale
+	return _get_cannon_mount_bottom_anchor_position() - pivot_to_bottom
+
+func _get_cannon_mount_bottom_anchor_position() -> Vector2:
+	return Vector2(0, TOWER_BASE_ANCHOR_Y) + CANNON_MOUNT_OFFSET
 
 func _make_base_texture() -> AtlasTexture:
 	var atlas: AtlasTexture = AtlasTexture.new()
@@ -333,7 +348,7 @@ func _update_sprite_texture() -> void:
 	_sprite.scale = Vector2.ONE * scale_factor * TOWER_VISUAL_SCALE
 	if tower_type == "cannon":
 		_sprite.centered = false
-		_sprite.offset = -_get_cannon_tail_anchor(visible_rect)
+		_sprite.offset = - _get_cannon_tail_anchor(visible_rect)
 	else:
 		_sprite.centered = true
 		_sprite.offset = _get_tower_bottom_anchor_offset(texture, visible_rect)
@@ -406,11 +421,23 @@ func _get_tower_target_height() -> float:
 
 func _get_tower_base_anchor_position() -> Vector2:
 	if tower_type == "cannon":
-		return CANNON_PIVOT_POSITION
+		return _get_cannon_pivot_position()
 	return Vector2(0, TOWER_BASE_ANCHOR_Y)
+
+func _get_range_circle_draw_points() -> PackedVector2Array:
+	if tower_type != "cannon":
+		return _range_circle_points
+	var offset: Vector2 = _get_tower_base_anchor_position()
+	var points := PackedVector2Array()
+	points.resize(_range_circle_points.size())
+	for i in range(_range_circle_points.size()):
+		points[i] = _range_circle_points[i] + offset
+	return points
 
 func is_click_in_area(click_pos: Vector2) -> bool:
 	var local_pos: Vector2 = to_local(click_pos)
+	if tower_type == "cannon":
+		return abs(local_pos.x) <= 38 and local_pos.y >= -96 and local_pos.y <= 24
 	return abs(local_pos.x) <= 38 and local_pos.y >= -82 and local_pos.y <= 18
 
 func _setup_upgrade_icon() -> void:
@@ -426,7 +453,7 @@ func _update_upgrade_icon_position() -> void:
 		return
 	var tower_top_y: float = _get_tower_base_anchor_position().y - _get_tower_target_height() * TOWER_VISUAL_SCALE
 	_upgrade_icon.position = Vector2(
-		-UPGRADE_HINT_SIZE.x * 0.5,
+		- UPGRADE_HINT_SIZE.x * 0.5,
 		tower_top_y - UPGRADE_HINT_SIZE.y - UPGRADE_HINT_TOP_GAP
 	)
 
