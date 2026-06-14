@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://c1k2dj1aqv53r"]
 
-[ext_resource type="Script" path="res://scripts/scenes/splash.gd" id="1"]
+[ext_resource type="Script" uid="uid://dwwhrk6suuwjm" path="res://scripts/scenes/splash.gd" id="1"]
 
 [node name="Splash" type="Node2D"]
 script = ExtResource("1")

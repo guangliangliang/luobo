@@ -15,6 +15,7 @@ const CANNON_MOUNT_BOTTOM_CENTER := Vector2(94.5, 106.0)
 const CANNON_MOUNT_OFFSET := Vector2(0, 2)
 const UPGRADE_HINT_SIZE := Vector2(38, 26)
 const UPGRADE_HINT_TOP_GAP := 6.0
+const CANNON_UPGRADE_HINT_Y_OFFSET := 16.0
 const INITIAL_ATTACK_STAGGER_MAX := 0.35
 const ATTACK_TIMER_JITTER := 0.04
 const NO_TARGET_SCAN_INTERVAL_MIN := 0.12
@@ -452,9 +453,10 @@ func _update_upgrade_icon_position() -> void:
 	if not _upgrade_icon:
 		return
 	var tower_top_y: float = _get_tower_base_anchor_position().y - _get_tower_target_height() * TOWER_VISUAL_SCALE
+	var y_offset: float = CANNON_UPGRADE_HINT_Y_OFFSET if tower_type == "cannon" else 0.0
 	_upgrade_icon.position = Vector2(
 		- UPGRADE_HINT_SIZE.x * 0.5,
-		tower_top_y - UPGRADE_HINT_SIZE.y - UPGRADE_HINT_TOP_GAP
+		tower_top_y - UPGRADE_HINT_SIZE.y - UPGRADE_HINT_TOP_GAP + y_offset
 	)
 
 func _update_upgrade_icon() -> void:
