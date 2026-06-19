@@ -27,10 +27,27 @@ var slow_timer: float = 0.0
 var slow_percent: float = 0.0
 var is_dead: bool = false
 
+# 血条动画相关
+var target_health: float = 0.0
+var health_animation_timer: float = 0.0
+var is_health_animating: bool = false
+var damage_flash_timer: float = 0.0
+var low_health_pulse_timer: float = 0.0
+
+# 血条视觉参数
+const HEALTH_BAR_HEIGHT = 6.0
+const HEALTH_BAR_CORNER_RADIUS = 2.0
+const HEALTH_ANIMATION_DURATION = 0.25
+
 func setup(monster_data: MonsterData, _path_points: PackedVector2Array) -> void:
 	data = monster_data
 	max_health = data.max_health
 	current_health = max_health
+	target_health = float(max_health)
+	health_animation_timer = 0.0
+	is_health_animating = false
+	damage_flash_timer = 0.0
+	low_health_pulse_timer = 0.0
 	base_speed = data.move_speed
 	current_speed = base_speed
 	progress_ratio = 0.0
@@ -183,6 +200,9 @@ func take_damage(amount: float) -> void:
 	current_health -= int(amount)
 	if current_health <= 0:
 		die()
+	is_health_animating = true
+	health_animation_timer = 0.0
+	damage_flash_timer = 0.1
 	queue_redraw()
 
 func apply_slow(percent: float, duration: float) -> void:
@@ -202,6 +222,15 @@ func _process(delta: float) -> void:
 			slow_percent = 0.0
 			current_speed = base_speed
 			queue_redraw()
+
+	_update_health_animation(delta)
+	
+	if is_health_animating or damage_flash_timer > 0:
+		queue_redraw()
+	
+	var health_pct = float(current_health) / float(max_health)
+	if health_pct < 0.3:
+		queue_redraw()
 
 	progress += current_speed * delta
 
@@ -305,16 +334,65 @@ func _draw() -> void:
 		draw_circle(VISUAL_OFFSET, data.body_radius, data.body_color)
 
 	var health_pct: float = float(current_health) / float(max_health)
+	var display_health_pct: float = target_health / float(max_health)
 	var bar_width: float = data.body_radius * 2.0
-	var bar_height: float = 4.0
+	var bar_height: float = HEALTH_BAR_HEIGHT
 	var bar_y: float = VISUAL_OFFSET.y - data.body_radius - 10.0
 	if uses_sprite:
 		var sprite_size: float = _get_sprite_target_size(data.monster_type) * SPRITE_SCALE_MULTIPLIER
 		bar_width = sprite_size * 0.8
 		bar_y = VISUAL_OFFSET.y - sprite_size * 0.65
 
-	draw_rect(Rect2(-bar_width / 2.0, bar_y, bar_width, bar_height), Color.RED)
-	draw_rect(Rect2(-bar_width / 2.0, bar_y, bar_width * health_pct, bar_height), Color.GREEN)
+	var bar_x = -bar_width / 2.0
+	var bar_rect = Rect2(bar_x, bar_y, bar_width, bar_height)
+
+	# 低血量脉动效果
+	var pulse_intensity = 0.0
+	if health_pct < 0.3 and not is_dead:
+		pulse_intensity = 0.5 + 0.5 * sin(low_health_pulse_timer * 4.0)
+
+	# 绘制阴影
+	_draw_rounded_rect(Rect2(bar_x, bar_y + 1, bar_width, bar_height), Color(0, 0, 0, 0.3), HEALTH_BAR_CORNER_RADIUS)
+
+	# 绘制血条背景
+	_draw_rounded_rect(bar_rect, Color(0.12, 0.12, 0.12), HEALTH_BAR_CORNER_RADIUS)
+
+	# 绘制边框
+	var border_rect = Rect2(bar_x - 0.5, bar_y - 0.5, bar_width + 1, bar_height + 1)
+	_draw_rounded_rect(border_rect, Color(0.45, 0.45, 0.45, 0.8), HEALTH_BAR_CORNER_RADIUS + 0.5)
+	_draw_rounded_rect(bar_rect, Color(0.12, 0.12, 0.12), HEALTH_BAR_CORNER_RADIUS)
+
+	# 绘制血量条
+	if display_health_pct > 0.01:
+		var fill_width = bar_width * display_health_pct
+		var fill_rect = Rect2(bar_x, bar_y, fill_width, bar_height)
+		
+		var health_color = _get_health_color(health_pct)
+		var health_color_dark = _get_health_color_dark(health_pct)
+		
+		# 受伤闪烁效果
+		if damage_flash_timer > 0:
+			var flash_factor = damage_flash_timer / 0.1
+			health_color = health_color.lerp(Color.WHITE, flash_factor * 0.5)
+			health_color_dark = health_color_dark.lerp(Color.WHITE, flash_factor * 0.5)
+		
+		# 低血量脉动效果
+		if pulse_intensity > 0:
+			health_color = health_color.lerp(Color.WHITE, pulse_intensity * 0.3)
+		
+		# 绘制渐变血量条（上半部分亮色，下半部分暗色）
+		var top_rect = Rect2(bar_x, bar_y, fill_width, bar_height / 2.0)
+		var bottom_rect = Rect2(bar_x, bar_y + bar_height / 2.0, fill_width, bar_height / 2.0)
+		
+		# 使用圆角绘制血量填充
+		if fill_width > HEALTH_BAR_CORNER_RADIUS * 2:
+			_draw_rounded_rect(fill_rect, health_color, HEALTH_BAR_CORNER_RADIUS)
+			# 稍微叠加一点暗色在底部增加立体感
+			_draw_rounded_rect(bottom_rect, health_color_dark, HEALTH_BAR_CORNER_RADIUS)
+		else:
+			# 血量很少时直接画矩形
+			draw_rect(fill_rect, health_color)
+
 
 func _draw_slow_trails(uses_sprite: bool) -> void:
 	var body_size: float = _get_sprite_target_size(data.monster_type) if uses_sprite else data.body_radius * 2.0
@@ -329,3 +407,87 @@ func _draw_slow_trails(uses_sprite: bool) -> void:
 	draw_circle(point_b, 4.0, shadow_color)
 	draw_circle(point_a, 2.6, trail_color)
 	draw_circle(point_b, 2.6, trail_color)
+
+func _get_health_color(health_pct: float) -> Color:
+	if health_pct >= 0.6:
+		return Color(0.2, 0.9, 0.3)
+	elif health_pct >= 0.3:
+		return Color(1.0, 0.7, 0.2)
+	else:
+		return Color(0.95, 0.2, 0.15)
+
+func _get_health_color_dark(health_pct: float) -> Color:
+	if health_pct >= 0.6:
+		return Color(0.15, 0.75, 0.25)
+	elif health_pct >= 0.3:
+		return Color(0.85, 0.55, 0.15)
+	else:
+		return Color(0.8, 0.15, 0.1)
+
+func _draw_rounded_rect(rect: Rect2, color: Color, corner_radius: float) -> void:
+	var points = PackedVector2Array()
+	
+	# 左上角
+	points.append(Vector2(rect.position.x + corner_radius, rect.position.y))
+	points.append(Vector2(rect.position.x + rect.size.x - corner_radius, rect.position.y))
+	
+	# 右上角圆弧
+	for i in range(9):
+		var angle = -PI / 2 + (PI / 2) * (i / 8.0)
+		points.append(Vector2(
+			rect.position.x + rect.size.x - corner_radius + cos(angle) * corner_radius,
+			rect.position.y + corner_radius + sin(angle) * corner_radius
+		))
+	
+	# 右边
+	points.append(Vector2(rect.position.x + rect.size.x, rect.position.y + rect.size.y - corner_radius))
+	
+	# 右下角圆弧
+	for i in range(9):
+		var angle = 0 + (PI / 2) * (i / 8.0)
+		points.append(Vector2(
+			rect.position.x + rect.size.x - corner_radius + cos(angle) * corner_radius,
+			rect.position.y + rect.size.y - corner_radius + sin(angle) * corner_radius
+		))
+	
+	# 下边
+	points.append(Vector2(rect.position.x + corner_radius, rect.position.y + rect.size.y))
+	
+	# 左下角圆弧
+	for i in range(9):
+		var angle = PI / 2 + (PI / 2) * (i / 8.0)
+		points.append(Vector2(
+			rect.position.x + corner_radius + cos(angle) * corner_radius,
+			rect.position.y + rect.size.y - corner_radius + sin(angle) * corner_radius
+		))
+	
+	# 左边
+	points.append(Vector2(rect.position.x, rect.position.y + corner_radius))
+	
+	# 左上角圆弧
+	for i in range(9):
+		var angle = PI + (PI / 2) * (i / 8.0)
+		points.append(Vector2(
+			rect.position.x + corner_radius + cos(angle) * corner_radius,
+			rect.position.y + corner_radius + sin(angle) * corner_radius
+		))
+	
+	draw_colored_polygon(points, color)
+
+func _update_health_animation(delta: float) -> void:
+	if is_health_animating:
+		health_animation_timer += delta
+		var t = clampf(health_animation_timer / HEALTH_ANIMATION_DURATION, 0.0, 1.0)
+		var eased_t = 1.0 - pow(1.0 - t, 3.0)
+		target_health = lerp(target_health, float(current_health), eased_t)
+		
+		if t >= 1.0:
+			is_health_animating = false
+			target_health = float(current_health)
+	
+	if damage_flash_timer > 0:
+		damage_flash_timer -= delta
+	
+	var health_pct = float(current_health) / float(max_health)
+	if health_pct < 0.3 and not is_dead:
+		low_health_pulse_timer += delta
