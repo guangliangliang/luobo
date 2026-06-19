@@ -7,6 +7,8 @@ signal continue_pressed
 
 var _bgm_slider: HSlider
 var _bgm_label: Label
+var _sfx_slider: HSlider
+var _sfx_label: Label
 var _is_paused: bool = false
 
 func _ready() -> void:
@@ -29,7 +31,7 @@ func _setup_ui() -> void:
 	add_child(center)
 
 	var panel: PanelContainer = PanelContainer.new()
-	panel.custom_minimum_size = Vector2(430, 430)
+	panel.custom_minimum_size = Vector2(430, 520)
 	panel.add_theme_stylebox_override("panel", _create_panel_stylebox())
 	center.add_child(panel)
 
@@ -54,6 +56,8 @@ func _setup_ui() -> void:
 
 	vbox.add_child(_make_separator())
 	_create_bgm_control(vbox)
+	vbox.add_child(_make_separator())
+	_create_sfx_control(vbox)
 	vbox.add_child(_make_separator())
 
 	var exit_btn: Button = _make_menu_button("退出本关")
@@ -100,6 +104,34 @@ func _create_bgm_control(parent: VBoxContainer) -> void:
 	_bgm_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bgm_vbox.add_child(_bgm_label)
 
+func _create_sfx_control(parent: VBoxContainer) -> void:
+	var sfx_vbox: VBoxContainer = VBoxContainer.new()
+	sfx_vbox.add_theme_constant_override("separation", 8)
+	parent.add_child(sfx_vbox)
+
+	var sfx_title: Label = Label.new()
+	sfx_title.text = "音效"
+	sfx_title.add_theme_font_size_override("font_size", 20)
+	sfx_title.add_theme_color_override("font_color", Color(0.92, 0.95, 1.0))
+	sfx_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sfx_vbox.add_child(sfx_title)
+
+	_sfx_slider = HSlider.new()
+	_sfx_slider.min_value = 0.0
+	_sfx_slider.max_value = 1.0
+	_sfx_slider.step = 0.01
+	_sfx_slider.value = AudioManager.get_sfx_volume() if AudioManager else 0.5
+	_sfx_slider.custom_minimum_size = Vector2(320, 28)
+	_sfx_slider.value_changed.connect(_on_sfx_volume_changed)
+	sfx_vbox.add_child(_sfx_slider)
+
+	_sfx_label = Label.new()
+	_sfx_label.text = "音量: %d%%" % int(_sfx_slider.value * 100)
+	_sfx_label.add_theme_font_size_override("font_size", 17)
+	_sfx_label.add_theme_color_override("font_color", Color(0.85, 0.88, 0.95))
+	_sfx_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sfx_vbox.add_child(_sfx_label)
+
 func _make_menu_button(text: String) -> Button:
 	var button: Button = Button.new()
 	button.text = text
@@ -133,10 +165,17 @@ func _on_bgm_volume_changed(value: float) -> void:
 	if AudioManager:
 		AudioManager.set_bgm_volume(value)
 
+func _on_sfx_volume_changed(value: float) -> void:
+	_sfx_label.text = "音量: %d%%" % int(value * 100)
+	if AudioManager:
+		AudioManager.set_sfx_volume(value)
+
 func show_dialog(is_paused_state: bool) -> void:
 	_is_paused = is_paused_state
 	if _bgm_slider and AudioManager:
 		_bgm_slider.value = AudioManager.get_bgm_volume()
+	if _sfx_slider and AudioManager:
+		_sfx_slider.value = AudioManager.get_sfx_volume()
 	visible = true
 
 func hide_dialog() -> void:

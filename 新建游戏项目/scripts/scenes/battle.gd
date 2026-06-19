@@ -354,16 +354,21 @@ func _create_ui() -> void:
 	canvas.add_child(_countdown_label)
 	_countdown_label.visible = false
 	
+	var dialog_canvas: CanvasLayer = CanvasLayer.new()
+	dialog_canvas.layer = 100
+	dialog_canvas.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(dialog_canvas)
+	
 	_settings_dialog = Control.new()
 	_settings_dialog.name = "SettingsDialog"
 	_settings_dialog.set_script(SETTINGS_DIALOG_SCRIPT)
-	canvas.add_child(_settings_dialog)
+	dialog_canvas.add_child(_settings_dialog)
 	_settings_dialog.visible = false
 	
 	_level_info_dialog = Control.new()
 	_level_info_dialog.name = "LevelInfoDialog"
 	_level_info_dialog.set_script(LEVEL_INFO_DIALOG_SCRIPT)
-	canvas.add_child(_level_info_dialog)
+	dialog_canvas.add_child(_level_info_dialog)
 	_level_info_dialog.visible = false
 
 func _connect_signals() -> void:

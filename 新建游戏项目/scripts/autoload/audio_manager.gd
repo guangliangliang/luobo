@@ -34,6 +34,7 @@ var _sfx_pool_index: int = 0
 var _last_sfx_play_msec: Dictionary = {}
 var _sfx_enabled: bool = true
 var _bgm_volume: float = 0.5
+var _sfx_volume: float = 0.5
 var _current_bgm: String = ""
 
 func _ready() -> void:
@@ -52,7 +53,7 @@ func _create_sfx_pool() -> void:
 	for i in range(SFX_POOL_SIZE):
 		var player: AudioStreamPlayer = AudioStreamPlayer.new()
 		player.name = "SFXPlayer%d" % i
-		player.volume_db = -10.0
+		player.volume_db = _volume_to_db(_sfx_volume)
 		add_child(player)
 		_sfx_players.append(player)
 
@@ -89,7 +90,7 @@ func play_sfx(name: String) -> void:
 	if stream:
 		var player: AudioStreamPlayer = _get_available_sfx_player()
 		player.stream = stream
-		player.volume_db = -10.0
+		player.volume_db = _volume_to_db(_sfx_volume)
 		player.play()
 
 func _can_play_sfx_now(name: String) -> bool:
@@ -147,6 +148,14 @@ func set_bgm_volume(volume: float) -> void:
 
 func get_bgm_volume() -> float:
 	return _bgm_volume
+
+func set_sfx_volume(volume: float) -> void:
+	_sfx_volume = clamp(volume, 0.0, 1.0)
+	for player in _sfx_players:
+		player.volume_db = _volume_to_db(_sfx_volume)
+
+func get_sfx_volume() -> float:
+	return _sfx_volume
 
 func _volume_to_db(volume: float) -> float:
 	if volume <= 0.0:
