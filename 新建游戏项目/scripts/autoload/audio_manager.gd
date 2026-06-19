@@ -14,6 +14,7 @@ const SFX_STREAM_PATHS: Dictionary = {
 	"attack_cannon": "res://assets/audio/sfx/attack_cannon.wav",
 	"attack_ice": "res://assets/audio/sfx/attack_ice.wav",
 	"monster_die": "res://assets/audio/sfx/monster_die.wav",
+	"monster_reach_end": "res://assets/audio/sfx/monster_reach_end.wav",
 	"wave_start": "res://assets/audio/sfx/wave_start.wav",
 	"victory": "res://assets/audio/sfx/victory.wav",
 	"defeat": "res://assets/audio/sfx/defeat.wav",

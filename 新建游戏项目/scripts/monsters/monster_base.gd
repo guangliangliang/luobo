@@ -241,9 +241,13 @@ func _reached_end() -> void:
 	if is_dead:
 		return
 	is_dead = true
+	
+	AudioManager.play_sfx("monster_reach_end")
 	monster_reached_end.emit()
 	GameManager.take_village_damage(GameManager.config.monster_reach_penalty)
-	queue_free()
+	
+	_spawn_reach_end_effect()
+	_play_reach_end_animation()
 
 func die() -> void:
 	if is_dead:
@@ -491,3 +495,70 @@ func _update_health_animation(delta: float) -> void:
 	var health_pct = float(current_health) / float(max_health)
 	if health_pct < 0.3 and not is_dead:
 		low_health_pulse_timer += delta
+
+func _spawn_reach_end_effect() -> void:
+	var effect: AnimatedSprite2D = AnimatedSprite2D.new()
+	effect.sprite_frames = _get_death_smoke_frames()
+	effect.animation = "smoke"
+	effect.global_position = global_position + DEATH_EFFECT_OFFSET
+	effect.scale = Vector2.ONE * 0.25
+	effect.modulate = Color(1.0, 0.4, 0.4, 1.0)
+	effect.z_index = 5
+	var root: Node = get_tree().current_scene
+	if root:
+		root.add_child(effect)
+		effect.play("smoke")
+		effect.animation_finished.connect(func(): _release_reach_end_effect(effect), CONNECT_ONE_SHOT)
+		root.get_tree().create_timer(DEATH_SMOKE_LIFETIME).timeout.connect(func(): _release_reach_end_effect(effect), CONNECT_ONE_SHOT)
+
+static func _release_reach_end_effect(effect: AnimatedSprite2D) -> void:
+	if not is_instance_valid(effect):
+		return
+	if bool(effect.get_meta("released", false)):
+		return
+	effect.set_meta("released", true)
+	effect.queue_free()
+
+func _play_reach_end_animation() -> void:
+	var tween: Tween = create_tween()
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "modulate:a", 0.0, 0.4)
+	tween.tween_property(self, "scale", scale * 0.3, 0.4)
+	tween.finished.connect(queue_free)
+	
+	_add_reach_end_trails()
+
+func _add_reach_end_trails() -> void:
+	var uses_sprite: bool = $MonsterSprite and $MonsterSprite.visible
+	var trail_count: int = 3
+	for i in range(trail_count):
+		var delay: float = float(i) * 0.08
+		get_tree().create_timer(delay).timeout.connect(func(idx = i): _draw_single_trail(idx, trail_count, uses_sprite))
+
+func _draw_single_trail(idx: int, total: int, uses_sprite: bool) -> void:
+	if not is_instance_valid(self):
+		return
+	
+	var body_size: float = _get_sprite_target_size(data.monster_type) if uses_sprite else data.body_radius * 2.0
+	var trail_alpha: float = 0.6 - float(idx) / float(total) * 0.5
+	var trail_color := Color(1.0, 0.3, 0.3, trail_alpha)
+	
+	var trail: Node2D = Node2D.new()
+	trail.global_position = global_position
+	trail.z_index = z_index - 1
+	
+	var circle: ColorRect = ColorRect.new()
+	circle.size = Vector2(body_size * 0.6, body_size * 0.6)
+	circle.position = -circle.size / 2.0 + VISUAL_OFFSET
+	circle.color = trail_color
+	
+	var root: Node = get_tree().current_scene
+	if root:
+		root.add_child(trail)
+		trail.add_child(circle)
+		
+		var tween: Tween = trail.create_tween()
+		tween.set_ease(Tween.EASE_OUT)
+		tween.tween_property(circle, "modulate:a", 0.0, 0.4)
+		tween.tween_property(trail, "scale", trail.scale * 0.5, 0.4)
+		tween.finished.connect(trail.queue_free)

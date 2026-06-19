@@ -538,6 +538,8 @@ func _on_gold_changed(_new_gold: int) -> void:
 
 func _on_village_health_changed(_new_health: int) -> void:
 	_update_village_health_marker()
+	if _game_started and _new_health < GameManager.max_village_health:
+		_on_monster_reach_end()
 
 func _on_tower_placed(_tower: Node2D, _spot_index: int) -> void:
 	_refresh_build_spot_markers()
@@ -623,3 +625,78 @@ func _refresh_build_spot_markers() -> void:
 		if _build_spot_sprites.has(spot_index):
 			var marker: Sprite2D = _build_spot_sprites[spot_index]
 			marker.visible = not _build_mgr.is_spot_occupied(spot_index)
+
+var _screen_flash: ColorRect = null
+
+func _on_monster_reach_end() -> void:
+	_village_shake()
+	_village_health_bar_flash()
+	_spawn_damage_popup()
+	_screen_red_flash()
+
+func _village_shake() -> void:
+	if not _village_drawer:
+		return
+	var original_pos: Vector2 = _village_drawer.position
+	var tween: Tween = _village_drawer.create_tween()
+	tween.set_ease(Tween.EASE_IN_OUT)
+	for i in range(4):
+		var offset: Vector2 = Vector2(randf_range(-6, 6), randf_range(-4, 4))
+		tween.tween_property(_village_drawer, "position", original_pos + offset, 0.05)
+	tween.tween_property(_village_drawer, "position", original_pos, 0.05)
+
+func _village_health_bar_flash() -> void:
+	if not _village_health_bar:
+		return
+	var original_style: StyleBoxFlat = _village_health_bar.get_theme_stylebox("fill") as StyleBoxFlat
+	if not original_style:
+		return
+	var tween: Tween = create_tween()
+	var flash_style: StyleBoxFlat = original_style.duplicate()
+	flash_style.bg_color = Color(1.0, 0.2, 0.2)
+	_village_health_bar.add_theme_stylebox_override("fill", flash_style)
+	tween.tween_callback(func(): _village_health_bar.add_theme_stylebox_override("fill", original_style)).set_delay(0.1)
+	tween.tween_callback(func(): _village_health_bar.add_theme_stylebox_override("fill", flash_style)).set_delay(0.1)
+	tween.tween_callback(func(): _village_health_bar.add_theme_stylebox_override("fill", original_style)).set_delay(0.1)
+
+func _spawn_damage_popup() -> void:
+	var canvas: CanvasLayer = CanvasLayer.new()
+	canvas.layer = 50
+	add_child(canvas)
+	
+	var label: Label = Label.new()
+	label.text = "-1"
+	label.add_theme_font_size_override("font_size", 48)
+	label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+	label.add_theme_color_override("font_outline_color", Color(0.3, 0.05, 0.05))
+	label.add_theme_constant_override("outline_size", 3)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	
+	if _village_drawer:
+		label.global_position = _village_drawer.global_position + Vector2(0, -120)
+	
+	canvas.add_child(label)
+	
+	var tween: Tween = label.create_tween()
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "position:y", label.position.y - 60, 0.6)
+	tween.tween_property(label, "modulate:a", 0, 0.3)
+	tween.finished.connect(canvas.queue_free)
+
+func _screen_red_flash() -> void:
+	if not _screen_flash:
+		_screen_flash = ColorRect.new()
+		_screen_flash.color = Color(1.0, 0.1, 0.1, 0.0)
+		_screen_flash.anchors_preset = Control.PRESET_FULL_RECT
+		_screen_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_screen_flash.z_index = 999
+		var canvas: CanvasLayer = CanvasLayer.new()
+		canvas.layer = 99
+		add_child(canvas)
+		canvas.add_child(_screen_flash)
+	
+	var tween: Tween = _screen_flash.create_tween()
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(_screen_flash, "modulate:a", 0.25, 0.08)
+	tween.tween_property(_screen_flash, "modulate:a", 0.0, 0.2)
