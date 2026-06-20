@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cukocoo2bbyy4"
-path="res://.godot/imported/level_card_locked.png-23c59514d28c5d60ad1394b953a3af0f.ctex"
+uid="uid://ckmng5u1fm0xx"
+path="res://.godot/imported/bird_sheet_1.png-3fa94778b576faa69b24058c85f38f62.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/ui/buttons/level_card_locked.png"
-dest_files=["res://.godot/imported/level_card_locked.png-23c59514d28c5d60ad1394b953a3af0f.ctex"]
+source_file="res://assets/effects/atmosphere/birds/bird_sheet_1.png"
+dest_files=["res://.godot/imported/bird_sheet_1.png-3fa94778b576faa69b24058c85f38f62.ctex"]
 
 [params]
 

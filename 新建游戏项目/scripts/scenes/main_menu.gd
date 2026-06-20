@@ -8,8 +8,18 @@ const BUTTON_PRESSED: Texture2D = preload("res://assets/ui/buttons/button_menu_p
 const BUTTON_REGION: Rect2 = Rect2(72.5, 175, 622.5, 144.5)
 
 const PARALLAX_STRENGTH: float = 40.0
-const LEAF_SPAWN_INTERVAL: float = 1.5
-const BIRD_SPAWN_INTERVAL: float = 3.0
+const LEAF_SPAWN_INTERVAL: float = 2.5
+const BIRD_SPAWN_INTERVAL: float = 4.0
+
+const LEAF_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/effects/atmosphere/leaves/leaf_1.png"),
+	preload("res://assets/effects/atmosphere/leaves/leaf_2.png"),
+	preload("res://assets/effects/atmosphere/leaves/leaf_3.png")
+]
+const BIRD_SHEET_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/effects/atmosphere/birds/bird_sheet_1.png"),
+	preload("res://assets/effects/atmosphere/birds/bird_sheet_2.png")
+]
 
 var _settings_dialog: Control
 var _codex_dialog: Control
@@ -50,6 +60,7 @@ func _setup_ui() -> void:
 
 	_atmosphere_layer = Node2D.new()
 	_atmosphere_layer.name = "AtmosphereLayer"
+	_atmosphere_layer.z_index = 100
 	add_child(_atmosphere_layer)
 
 	var top_buttons: Control = Control.new()
@@ -374,53 +385,27 @@ func _process(delta: float) -> void:
 func _spawn_leaf() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	
-	var leaf: ColorRect = ColorRect.new()
-	leaf.color = Color(0.55, 0.7, 0.25, 0.9)
-	leaf.custom_minimum_size = Vector2(12, 10)
+	var leaf: Sprite2D = Sprite2D.new()
+	leaf.texture = LEAF_TEXTURES.pick_random()
+	leaf.scale = Vector2(0.25, 0.25)
 	
 	var start_x: float = randf_range(50, viewport_size.x - 50)
 	leaf.position = Vector2(start_x, -20)
 	
 	var target_y: float = viewport_size.y + 30
-	var duration: float = randf_range(3.0, 5.0)
+	var duration: float = randf_range(4.0, 6.0)
 	
 	var tween: Tween = create_tween()
 	tween.tween_property(leaf, "position:y", target_y, duration)
-	tween.tween_property(leaf, "rotation", randf_range(3.14, 6.28), duration)
-	tween.tween_property(leaf, "modulate:a", 0.0, duration * 0.2).set_delay(duration * 0.8)
 	tween.finished.connect(func(): leaf.queue_free())
-	
-	var sway_tween: Tween = create_tween()
-	sway_tween.set_loops()
-	var sway_amount: float = randf_range(20, 40)
-	sway_tween.tween_property(leaf, "position:x", start_x - sway_amount, randf_range(0.8, 1.5)).from(start_x + sway_amount).set_trans(Tween.TRANS_SINE)
 	
 	_atmosphere_layer.add_child(leaf)
 
 func _spawn_bird() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	
-	var bird: Node2D = Node2D.new()
-	
-	var wing1: ColorRect = ColorRect.new()
-	wing1.color = Color(0.2, 0.2, 0.25, 0.9)
-	wing1.custom_minimum_size = Vector2(15, 6)
-	wing1.position = Vector2(-12, 0)
-	wing1.pivot_offset = Vector2(12, 3)
-	bird.add_child(wing1)
-	
-	var wing2: ColorRect = ColorRect.new()
-	wing2.color = Color(0.2, 0.2, 0.25, 0.9)
-	wing2.custom_minimum_size = Vector2(15, 6)
-	wing2.position = Vector2(3, 0)
-	wing2.pivot_offset = Vector2(0, 3)
-	bird.add_child(wing2)
-	
-	var body: ColorRect = ColorRect.new()
-	body.color = Color(0.25, 0.25, 0.3, 0.95)
-	body.custom_minimum_size = Vector2(12, 6)
-	body.position = Vector2(-6, -3)
-	bird.add_child(body)
+	var bird: BirdSprite = BirdSprite.new()
+	bird.sheet_texture = BIRD_SHEET_TEXTURES.pick_random()
 	
 	var start_y: float = randf_range(80, viewport_size.y * 0.4)
 	bird.position = Vector2(-30, start_y)
@@ -432,12 +417,44 @@ func _spawn_bird() -> void:
 	tween.tween_property(bird, "position:x", target_x, duration)
 	tween.finished.connect(func(): bird.queue_free())
 	
-	var wing_tween: Tween = create_tween()
-	wing_tween.set_loops()
-	wing_tween.tween_property(wing1, "rotation", 0.5, 0.15).from(-0.5).set_trans(Tween.TRANS_SINE)
-	wing_tween.parallel().tween_property(wing2, "rotation", -0.5, 0.15).from(0.5).set_trans(Tween.TRANS_SINE)
-	
 	_atmosphere_layer.add_child(bird)
+
+
+class BirdSprite extends Node2D:
+	var sheet_texture: Texture2D: set = set_sheet_texture
+	var sprite: Sprite2D
+	var frame: int = 0
+	var frame_timer: float = 0.0
+	var frame_count: int = 4
+	var frame_width: int = 256
+	var frame_height: int = 256
+	
+	func _init() -> void:
+		sprite = Sprite2D.new()
+		sprite.scale = Vector2(0.15, 0.15)
+		add_child(sprite)
+	
+	func set_sheet_texture(value: Texture2D) -> void:
+		sheet_texture = value
+		if sheet_texture:
+			frame_width = sheet_texture.get_width() / frame_count
+			frame_height = sheet_texture.get_height()
+		_update_frame()
+	
+	func _process(delta: float) -> void:
+		frame_timer += delta
+		if frame_timer >= 0.1:
+			frame_timer = 0.0
+			frame = (frame + 1) % frame_count
+			_update_frame()
+	
+	func _update_frame() -> void:
+		if not sheet_texture:
+			return
+		var atlas: AtlasTexture = AtlasTexture.new()
+		atlas.atlas = sheet_texture
+		atlas.region = Rect2(frame * frame_width, 0, frame_width, frame_height)
+		sprite.texture = atlas
 
 func _on_start_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/LevelSelect.tscn")
