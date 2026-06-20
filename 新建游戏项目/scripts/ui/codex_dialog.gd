@@ -9,6 +9,7 @@ var _content_list: VBoxContainer
 var _active_tab: String = "tower"
 var _selected_tower_type: String = ""
 var _selected_monster_type: String = ""
+var _large_image_popup: Control
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -151,6 +152,7 @@ func _make_avatar_button(label_text: String, image_path: String, selected: bool)
 	margin.add_child(vbox)
 
 	var image: TextureRect = _make_unit_image(image_path, Vector2(48, 48))
+	image.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(image)
 
 	var label: Label = Label.new()
@@ -620,3 +622,101 @@ func show_dialog() -> void:
 
 func hide_dialog() -> void:
 	visible = false
+	_close_large_image()
+
+func _on_image_clicked(event: InputEvent, image_path: String) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_show_large_image(image_path)
+
+func _show_large_image(image_path: String) -> void:
+	_close_large_image()
+	
+	if image_path.is_empty() or not ResourceLoader.exists(image_path):
+		return
+	
+	_large_image_popup = Control.new()
+	_large_image_popup.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_large_image_popup.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_large_image_popup)
+	
+	var bg: ColorRect = ColorRect.new()
+	bg.color = Color(0, 0, 0, 0.85)
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_STOP
+	bg.gui_input.connect(_close_large_image)
+	_large_image_popup.add_child(bg)
+	
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_large_image_popup.add_child(center)
+	
+	var panel: PanelContainer = PanelContainer.new()
+	panel.custom_minimum_size = Vector2(400, 450)
+	var panel_style: StyleBoxFlat = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.1, 0.12, 0.16, 0.98)
+	panel_style.corner_radius_top_left = 12
+	panel_style.corner_radius_top_right = 12
+	panel_style.corner_radius_bottom_left = 12
+	panel_style.corner_radius_bottom_right = 12
+	panel_style.border_width_left = 2
+	panel_style.border_width_top = 2
+	panel_style.border_width_right = 2
+	panel_style.border_width_bottom = 2
+	panel_style.border_color = Color(0.4, 0.48, 0.6)
+	panel.add_theme_stylebox_override("panel", panel_style)
+	center.add_child(panel)
+	
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_top", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_bottom", 20)
+	panel.add_child(margin)
+	
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 16)
+	margin.add_child(vbox)
+	
+	var title_label: Label = Label.new()
+	title_label.text = "查看大图"
+	title_label.add_theme_font_size_override("font_size", 24)
+	title_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.5))
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title_label)
+	
+	var image_texture: Texture2D = load(image_path)
+	if image_texture:
+		var image_rect: TextureRect = TextureRect.new()
+		image_rect.texture = image_texture
+		image_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		image_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		image_rect.custom_minimum_size = Vector2(300, 300)
+		vbox.add_child(image_rect)
+	
+	var close_btn: Button = Button.new()
+	close_btn.text = "关闭"
+	close_btn.custom_minimum_size = Vector2(160, 50)
+	close_btn.focus_mode = Control.FOCUS_NONE
+	var btn_style: StyleBoxFlat = StyleBoxFlat.new()
+	btn_style.bg_color = Color(0.22, 0.28, 0.36)
+	btn_style.corner_radius_top_left = 8
+	btn_style.corner_radius_top_right = 8
+	btn_style.corner_radius_bottom_left = 8
+	btn_style.corner_radius_bottom_right = 8
+	btn_style.border_width_left = 2
+	btn_style.border_width_top = 2
+	btn_style.border_width_right = 2
+	btn_style.border_width_bottom = 2
+	btn_style.border_color = Color(0.5, 0.58, 0.7)
+	close_btn.add_theme_stylebox_override("normal", btn_style)
+	close_btn.add_theme_stylebox_override("hover", btn_style)
+	close_btn.add_theme_font_size_override("font_size", 20)
+	close_btn.add_theme_color_override("font_color", Color(0.95, 0.98, 1.0))
+	close_btn.pressed.connect(_close_large_image)
+	vbox.add_child(close_btn)
+
+func _close_large_image() -> void:
+	if _large_image_popup and is_instance_valid(_large_image_popup):
+		_large_image_popup.queue_free()
+		_large_image_popup = null

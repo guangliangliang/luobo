@@ -60,22 +60,12 @@ func _setup_ui() -> void:
 	logo.texture = LOGO_TEXTURE
 	logo.expand_mode = TextureRect.EXPAND_FIT_WIDTH
 	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	logo.custom_minimum_size = Vector2(0, 180)
+	logo.custom_minimum_size = Vector2(0, 140)
 	logo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	center.add_child(logo)
 
-	var title: Label = Label.new()
-	title.text = "选择关卡"
-	title.add_theme_font_size_override("font_size", 38)
-	title.add_theme_color_override("font_color", Color(1.0, 0.9, 0.45))
-	title.add_theme_color_override("font_shadow_color", Color(0.18, 0.08, 0.02, 0.95))
-	title.add_theme_constant_override("shadow_offset_x", 2)
-	title.add_theme_constant_override("shadow_offset_y", 2)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	center.add_child(title)
-
 	_level_scroll = ScrollContainer.new()
-	_level_scroll.custom_minimum_size = Vector2(0, 172)
+	_level_scroll.custom_minimum_size = Vector2(0, 320)
 	_level_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_level_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	_level_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -83,8 +73,8 @@ func _setup_ui() -> void:
 	center.add_child(_level_scroll)
 
 	var levels_hbox: HBoxContainer = HBoxContainer.new()
-	levels_hbox.custom_minimum_size = Vector2(0, 158)
-	levels_hbox.add_theme_constant_override("separation", 26)
+	levels_hbox.custom_minimum_size = Vector2(0, 280)
+	levels_hbox.add_theme_constant_override("separation", 18)
 	levels_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	_level_scroll.add_child(levels_hbox)
 
@@ -95,10 +85,36 @@ func _setup_ui() -> void:
 		if not level_data:
 			continue
 		var btn: Button = Button.new()
-		btn.text = "第%d关\n%s" % [level_id, level_data.level_name]
-		btn.custom_minimum_size = Vector2(246, 150)
+		btn.text = ""
+		btn.custom_minimum_size = Vector2(340, 260)
 		_apply_level_button_style(btn)
 		btn.pressed.connect(_on_level_pressed.bind(level_id))
+		
+		var card_container: Control = Control.new()
+		card_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		card_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		btn.add_child(card_container)
+		
+		var thumbnail: Control = _generate_level_thumbnail(level_data)
+		thumbnail.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		thumbnail.offset_left = 40
+		thumbnail.offset_top = 30
+		thumbnail.offset_right = -40
+		thumbnail.offset_bottom = -70
+		card_container.add_child(thumbnail)
+		
+		var level_name_label: Label = Label.new()
+		level_name_label.text = "第%d关\n%s" % [level_id, level_data.level_name]
+		level_name_label.add_theme_font_size_override("font_size", 24)
+		level_name_label.add_theme_color_override("font_color", Color(0.3, 0.12, 0.02))
+		level_name_label.add_theme_color_override("font_outline_color", Color(1.0, 0.9, 0.6))
+		level_name_label.add_theme_constant_override("outline_size", 4)
+		level_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		level_name_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		level_name_label.offset_top = 160
+		level_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card_container.add_child(level_name_label)
+		
 		levels_hbox.add_child(btn)
 		_level_buttons[level_id] = btn
 
@@ -237,3 +253,48 @@ func _on_level_pressed(level_id: int) -> void:
 
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
+
+func _generate_level_thumbnail(level_data: LevelData) -> Control:
+	var container: Control = Control.new()
+	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	
+	var padding_left: float = 20.0
+	var padding_top: float = 15.0
+	var padding_right: float = 20.0
+	var padding_bottom: float = 15.0
+	var map_width: float = 260.0 - padding_left - padding_right
+	var map_height: float = 160.0 - padding_top - padding_bottom
+	
+	var original_width: float = 1280.0
+	var original_height: float = 720.0
+	var scale_x: float = map_width / original_width
+	var scale_y: float = map_height / original_height
+	var scale: float = min(scale_x, scale_y)
+	
+	for path_points: PackedVector2Array in level_data.path_points:
+		if path_points.size() < 2:
+			continue
+		var line: Line2D = Line2D.new()
+		line.width = level_data.path_width * scale
+		line.default_color = level_data.path_color
+		for point in path_points:
+			var scaled_x: float = padding_left + point.x * scale
+			var scaled_y: float = padding_top + point.y * scale
+			line.add_point(Vector2(scaled_x, scaled_y))
+		container.add_child(line)
+	
+	var village_icon: ColorRect = ColorRect.new()
+	village_icon.color = Color(0.9, 0.3, 0.25, 1.0)
+	village_icon.custom_minimum_size = Vector2(16, 16)
+	var village_scaled_x: float = padding_left + level_data.village_position.x * scale
+	var village_scaled_y: float = padding_top + level_data.village_position.y * scale
+	village_icon.position = Vector2(village_scaled_x - 8, village_scaled_y - 8)
+	container.add_child(village_icon)
+	
+	var village_icon_inner: ColorRect = ColorRect.new()
+	village_icon_inner.color = Color(1.0, 0.8, 0.25, 1.0)
+	village_icon_inner.custom_minimum_size = Vector2(8, 8)
+	village_icon_inner.position = Vector2(village_scaled_x - 4, village_scaled_y - 4)
+	container.add_child(village_icon_inner)
+	
+	return container

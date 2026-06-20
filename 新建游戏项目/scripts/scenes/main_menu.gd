@@ -7,12 +7,25 @@ const BUTTON_HOVER: Texture2D = preload("res://assets/ui/buttons/button_menu_hov
 const BUTTON_PRESSED: Texture2D = preload("res://assets/ui/buttons/button_menu_pressed.png")
 const BUTTON_REGION: Rect2 = Rect2(72.5, 175, 622.5, 144.5)
 
+const PARALLAX_STRENGTH: float = 40.0
+const LEAF_SPAWN_INTERVAL: float = 1.5
+const BIRD_SPAWN_INTERVAL: float = 3.0
+
 var _settings_dialog: Control
 var _codex_dialog: Control
 var _bgm_slider: HSlider
 var _bgm_label: Label
 var _sfx_slider: HSlider
 var _sfx_label: Label
+
+var _bg_texture_rect: TextureRect
+var _bg_offset: Vector2 = Vector2.ZERO
+var _target_bg_offset: Vector2 = Vector2.ZERO
+
+var _leaf_timer: float = 0.0
+var _bird_timer: float = 0.0
+
+var _atmosphere_layer: Node2D
 
 func _ready() -> void:
 	AudioManager.play_bgm("menu")
@@ -26,12 +39,18 @@ func _setup_ui() -> void:
 	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.name = "MenuBackground"
 	add_child(bg)
+	_bg_texture_rect = bg
 
 	var shade: ColorRect = ColorRect.new()
 	shade.color = Color(0, 0, 0, 0.16)
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(shade)
+
+	_atmosphere_layer = Node2D.new()
+	_atmosphere_layer.name = "AtmosphereLayer"
+	add_child(_atmosphere_layer)
 
 	var top_buttons: Control = Control.new()
 	top_buttons.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -340,6 +359,85 @@ func _make_button_style(texture: Texture2D) -> StyleBoxTexture:
 	style.set_content_margin(SIDE_TOP, 16)
 	style.set_content_margin(SIDE_BOTTOM, 20)
 	return style
+
+func _process(delta: float) -> void:
+	_leaf_timer += delta
+	if _leaf_timer >= LEAF_SPAWN_INTERVAL:
+		_leaf_timer = 0.0
+		_spawn_leaf()
+	
+	_bird_timer += delta
+	if _bird_timer >= BIRD_SPAWN_INTERVAL:
+		_bird_timer = 0.0
+		_spawn_bird()
+
+func _spawn_leaf() -> void:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	
+	var leaf: ColorRect = ColorRect.new()
+	leaf.color = Color(0.55, 0.7, 0.25, 0.9)
+	leaf.custom_minimum_size = Vector2(12, 10)
+	
+	var start_x: float = randf_range(50, viewport_size.x - 50)
+	leaf.position = Vector2(start_x, -20)
+	
+	var target_y: float = viewport_size.y + 30
+	var duration: float = randf_range(3.0, 5.0)
+	
+	var tween: Tween = create_tween()
+	tween.tween_property(leaf, "position:y", target_y, duration)
+	tween.tween_property(leaf, "rotation", randf_range(3.14, 6.28), duration)
+	tween.tween_property(leaf, "modulate:a", 0.0, duration * 0.2).set_delay(duration * 0.8)
+	tween.finished.connect(func(): leaf.queue_free())
+	
+	var sway_tween: Tween = create_tween()
+	sway_tween.set_loops()
+	var sway_amount: float = randf_range(20, 40)
+	sway_tween.tween_property(leaf, "position:x", start_x - sway_amount, randf_range(0.8, 1.5)).from(start_x + sway_amount).set_trans(Tween.TRANS_SINE)
+	
+	_atmosphere_layer.add_child(leaf)
+
+func _spawn_bird() -> void:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	
+	var bird: Node2D = Node2D.new()
+	
+	var wing1: ColorRect = ColorRect.new()
+	wing1.color = Color(0.2, 0.2, 0.25, 0.9)
+	wing1.custom_minimum_size = Vector2(15, 6)
+	wing1.position = Vector2(-12, 0)
+	wing1.pivot_offset = Vector2(12, 3)
+	bird.add_child(wing1)
+	
+	var wing2: ColorRect = ColorRect.new()
+	wing2.color = Color(0.2, 0.2, 0.25, 0.9)
+	wing2.custom_minimum_size = Vector2(15, 6)
+	wing2.position = Vector2(3, 0)
+	wing2.pivot_offset = Vector2(0, 3)
+	bird.add_child(wing2)
+	
+	var body: ColorRect = ColorRect.new()
+	body.color = Color(0.25, 0.25, 0.3, 0.95)
+	body.custom_minimum_size = Vector2(12, 6)
+	body.position = Vector2(-6, -3)
+	bird.add_child(body)
+	
+	var start_y: float = randf_range(80, viewport_size.y * 0.4)
+	bird.position = Vector2(-30, start_y)
+	
+	var target_x: float = viewport_size.x + 30
+	var duration: float = randf_range(4.0, 6.0)
+	
+	var tween: Tween = create_tween()
+	tween.tween_property(bird, "position:x", target_x, duration)
+	tween.finished.connect(func(): bird.queue_free())
+	
+	var wing_tween: Tween = create_tween()
+	wing_tween.set_loops()
+	wing_tween.tween_property(wing1, "rotation", 0.5, 0.15).from(-0.5).set_trans(Tween.TRANS_SINE)
+	wing_tween.parallel().tween_property(wing2, "rotation", -0.5, 0.15).from(0.5).set_trans(Tween.TRANS_SINE)
+	
+	_atmosphere_layer.add_child(bird)
 
 func _on_start_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/LevelSelect.tscn")
