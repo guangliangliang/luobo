@@ -16,6 +16,7 @@ const BUILD_MENU_SCRIPT: GDScript = preload("res://scripts/ui/build_menu.gd")
 const TOWER_MENU_SCRIPT: GDScript = preload("res://scripts/ui/tower_menu.gd")
 const SETTINGS_DIALOG_SCRIPT: GDScript = preload("res://scripts/ui/settings_dialog.gd")
 const LEVEL_INFO_DIALOG_SCRIPT: GDScript = preload("res://scripts/ui/level_info_dialog.gd")
+const CONFIRM_EXIT_LEVEL_DIALOG_SCRIPT: GDScript = preload("res://scripts/ui/confirm_exit_level_dialog.gd")
 const BUILD_SPOT_REGION := Rect2(102, 46, 822.5, 490.5)
 const START_COUNTDOWN_SECONDS := 3
 const START_MESSAGE_DURATION := 0.2
@@ -40,6 +41,7 @@ var _selected_tower: Node2D = null
 var _is_paused: bool = false
 var _game_started: bool = false
 var _level_info_dialog: Control
+var _confirm_exit_level_dialog: Control
 var _suppress_tower_menu_gold_update: bool = false
 
 func _ready() -> void:
@@ -371,6 +373,12 @@ func _create_ui() -> void:
 	dialog_canvas.add_child(_level_info_dialog)
 	_level_info_dialog.visible = false
 
+	_confirm_exit_level_dialog = Control.new()
+	_confirm_exit_level_dialog.name = "ConfirmExitLevelDialog"
+	_confirm_exit_level_dialog.set_script(CONFIRM_EXIT_LEVEL_DIALOG_SCRIPT)
+	dialog_canvas.add_child(_confirm_exit_level_dialog)
+	_confirm_exit_level_dialog.visible = false
+
 func _connect_signals() -> void:
 	_hud.pause_pressed.connect(_on_pause_pressed)
 	_hud.settings_pressed.connect(_on_settings_pressed)
@@ -379,6 +387,8 @@ func _connect_signals() -> void:
 	_settings_dialog.restart_level_pressed.connect(_on_restart_level)
 	_settings_dialog.continue_pressed.connect(_on_continue)
 	_level_info_dialog.close_pressed.connect(_on_close_level_info)
+	_confirm_exit_level_dialog.confirm_pressed.connect(_on_confirm_exit_level)
+	_confirm_exit_level_dialog.cancel_pressed.connect(_on_cancel_exit_level)
 	_build_menu.tower_selected.connect(_on_build_tower)
 	_build_menu.cancel_pressed.connect(_on_cancel_build)
 	_tower_menu.upgrade_pressed.connect(_on_upgrade_tower)
@@ -402,11 +412,18 @@ func _on_settings_pressed() -> void:
 	_settings_dialog.show_dialog(_is_paused)
 
 func _on_exit_level() -> void:
+	_confirm_exit_level_dialog.show_dialog()
+
+func _on_confirm_exit_level() -> void:
+	_confirm_exit_level_dialog.hide_dialog()
 	_settings_dialog.hide_dialog()
 	if _is_paused:
 		_toggle_pause()
 	GameManager.is_battle_active = false
 	get_tree().change_scene_to_file("res://scenes/LevelSelect.tscn")
+
+func _on_cancel_exit_level() -> void:
+	_confirm_exit_level_dialog.hide_dialog()
 
 func _on_level_info() -> void:
 	_level_info_dialog.show_dialog()
@@ -610,7 +627,7 @@ func _input(event: InputEvent) -> void:
 		_build_menu.show_at(click_pos)
 
 func _is_blocking_dialog_open() -> bool:
-	return (_settings_dialog and _settings_dialog.visible) or (_level_info_dialog and _level_info_dialog.visible)
+	return (_settings_dialog and _settings_dialog.visible) or (_level_info_dialog and _level_info_dialog.visible) or (_confirm_exit_level_dialog and _confirm_exit_level_dialog.visible)
 
 func _hide_tower_range() -> void:
 	if _selected_tower and is_instance_valid(_selected_tower):

@@ -99,9 +99,9 @@ func _setup_ui() -> void:
 	btn_vbox.add_child(restart_btn)
 
 	var menu_btn: Button = Button.new()
-	menu_btn.text = "返回菜单"
+	menu_btn.text = "返回关卡"
 	_apply_result_button_style(menu_btn)
-	menu_btn.pressed.connect(_on_menu)
+	menu_btn.pressed.connect(_on_level_select)
 	btn_vbox.add_child(menu_btn)
 
 func _apply_result_button_style(button: Button) -> void:
@@ -181,8 +181,8 @@ func _on_restart() -> void:
 	GameManager.current_level_id = _result_data.get("level_id", 1)
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 
-func _on_menu() -> void:
-	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
+func _on_level_select() -> void:
+	get_tree().change_scene_to_file("res://scenes/LevelSelect.tscn")
 
 func _on_next() -> void:
 	var next_id: int = _result_data.get("level_id", 1) + 1
