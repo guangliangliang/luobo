@@ -8,7 +8,7 @@ const BUTTON_PRESSED: Texture2D = preload("res://assets/ui/buttons/button_menu_p
 const LEVEL_CARD_NORMAL: Texture2D = preload("res://assets/ui/level_select/level_card_normal.png")
 const LEVEL_CARD_HOVER: Texture2D = preload("res://assets/ui/level_select/level_card_hover.png")
 const LEVEL_CARD_LOCKED: Texture2D = preload("res://assets/ui/level_select/level_card_locked.png")
-const BATTLE_SCENE: PackedScene = preload("res://scenes/Battle.tscn")
+const LEVEL_PREVIEW_SCENE: PackedScene = preload("res://scenes/LevelPreview.tscn")
 const BUTTON_REGION: Rect2 = Rect2(72.5, 175, 622.5, 144.5)
 const LEVEL_TEXT_NORMAL: Color = Color(0.28, 0.12, 0.02)
 const LEVEL_TEXT_HOVER: Color = Color(0.18, 0.08, 0.01)
@@ -249,7 +249,7 @@ func _on_level_pressed(level_id: int) -> void:
 	if Time.get_ticks_msec() < _suppress_press_until_ms:
 		return
 	GameManager.current_level_id = level_id
-	get_tree().change_scene_to_packed(BATTLE_SCENE)
+	get_tree().change_scene_to_packed(LEVEL_PREVIEW_SCENE)
 
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
