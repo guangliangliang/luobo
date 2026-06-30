@@ -5,6 +5,7 @@ const LOGO_TEXTURE: Texture2D = preload("res://assets/ui/menu/logo_village_defen
 const BUTTON_NORMAL: Texture2D = preload("res://assets/ui/buttons/button_menu_normal.png")
 const BUTTON_HOVER: Texture2D = preload("res://assets/ui/buttons/button_menu_hover.png")
 const BUTTON_PRESSED: Texture2D = preload("res://assets/ui/buttons/button_menu_pressed.png")
+const ICON_PLAY: Texture2D = preload("res://assets/ui/icons/icon_play.svg")
 const BUTTON_REGION: Rect2 = Rect2(72.5, 175, 622.5, 144.5)
 
 func _ready() -> void:
@@ -55,6 +56,7 @@ func _show_main_menu_ui() -> void:
 	start_btn.text = "开始游戏"
 	start_btn.custom_minimum_size = Vector2(252, 78)
 	_apply_menu_button_style(start_btn, 24)
+	_apply_button_icon(start_btn, ICON_PLAY)
 	start_btn.pressed.connect(_on_start_pressed)
 	menu.add_child(start_btn)
 
@@ -80,6 +82,13 @@ func _apply_menu_button_style(button: Button, font_size: int) -> void:
 	button.add_theme_constant_override("outline_size", 2)
 	button.add_theme_constant_override("shadow_offset_x", 2)
 	button.add_theme_constant_override("shadow_offset_y", 2)
+
+func _apply_button_icon(button: Button, icon: Texture2D) -> void:
+	button.icon = icon
+	button.expand_icon = true
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.add_theme_constant_override("h_separation", 8)
+	button.add_theme_constant_override("icon_max_width", 30)
 
 func _make_button_style(texture: Texture2D) -> StyleBoxTexture:
 	var atlas: AtlasTexture = AtlasTexture.new()

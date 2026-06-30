@@ -9,6 +9,7 @@ const LEVEL_CARD_NORMAL: Texture2D = preload("res://assets/ui/level_select/level
 const LEVEL_CARD_HOVER: Texture2D = preload("res://assets/ui/level_select/level_card_hover.png")
 const LEVEL_CARD_LOCKED: Texture2D = preload("res://assets/ui/level_select/level_card_locked.png")
 const LEVEL_PREVIEW_SCENE: PackedScene = preload("res://scenes/LevelPreview.tscn")
+const BACK_BUTTON_TEXTURE: Texture2D = preload("res://assets/ui/icons/icon_back_turn.svg")
 const BUTTON_REGION: Rect2 = Rect2(72.5, 175, 622.5, 144.5)
 const LEVEL_TEXT_NORMAL: Color = Color(0.28, 0.12, 0.02)
 const LEVEL_TEXT_HOVER: Color = Color(0.18, 0.08, 0.01)
@@ -16,6 +17,8 @@ const LEVEL_TEXT_SELECTED: Color = Color(0.72, 0.26, 0.02)
 const DRAG_THRESHOLD: float = 8.0
 const CONTENT_MAX_WIDTH: float = 1040.0
 const CONTENT_MARGIN: float = 24.0
+const BACK_BUTTON_SIZE: Vector2 = Vector2(68, 68)
+const BACK_BUTTON_MARGIN: float = 22.0
 
 var _level_buttons: Dictionary = {}
 var _level_scroll: ScrollContainer
@@ -118,18 +121,35 @@ func _setup_ui() -> void:
 		levels_hbox.add_child(btn)
 		_level_buttons[level_id] = btn
 
-	var spacer: Control = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 14)
-	center.add_child(spacer)
-
-	var back_btn: Button = Button.new()
-	back_btn.text = "返回菜单"
-	back_btn.custom_minimum_size = Vector2(252, 78)
-	_apply_menu_button_style(back_btn, 22)
-	back_btn.pressed.connect(_on_back_pressed)
-	center.add_child(back_btn)
-
+	add_child(_create_back_icon_button("返回菜单"))
 	_update_buttons()
+
+func _create_back_icon_button(tooltip: String) -> Button:
+	var button: Button = Button.new()
+	button.text = ""
+	button.tooltip_text = ""
+	button.custom_minimum_size = BACK_BUTTON_SIZE
+	button.size = BACK_BUTTON_SIZE
+	button.position = Vector2(BACK_BUTTON_MARGIN, BACK_BUTTON_MARGIN)
+	button.focus_mode = Control.FOCUS_NONE
+	_apply_back_icon_button_style(button)
+	button.pressed.connect(_on_back_pressed)
+
+	var icon: TextureRect = TextureRect.new()
+	icon.texture = BACK_BUTTON_TEXTURE
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	button.add_child(icon)
+	return button
+
+func _apply_back_icon_button_style(button: Button) -> void:
+	var empty_style: StyleBoxEmpty = StyleBoxEmpty.new()
+	button.add_theme_stylebox_override("normal", empty_style)
+	button.add_theme_stylebox_override("hover", empty_style)
+	button.add_theme_stylebox_override("pressed", empty_style)
+	button.add_theme_stylebox_override("focus", empty_style)
 
 func _apply_menu_button_style(button: Button, font_size: int) -> void:
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER

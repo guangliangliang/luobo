@@ -3,6 +3,10 @@ extends Control
 signal pause_pressed
 signal settings_pressed
 
+const ICON_PAUSE: Texture2D = preload("res://assets/ui/icons/icon_pause.svg")
+const ICON_PLAY: Texture2D = preload("res://assets/ui/icons/icon_play.svg")
+const ICON_SETTINGS: Texture2D = preload("res://assets/ui/icons/icon_settings.svg")
+
 var _gold_label: Label
 var _wave_label: Label
 var _pause_btn: Button
@@ -51,10 +55,12 @@ func _setup_ui() -> void:
 	h_box.add_child(_wave_label)
 
 	_pause_btn = _make_hud_button("暂停")
+	_apply_button_icon(_pause_btn, ICON_PAUSE)
 	_pause_btn.pressed.connect(func(): pause_pressed.emit())
 	h_box.add_child(_pause_btn)
 
 	_settings_btn = _make_hud_button("设置")
+	_apply_button_icon(_settings_btn, ICON_SETTINGS)
 	_settings_btn.pressed.connect(func(): settings_pressed.emit())
 	h_box.add_child(_settings_btn)
 
@@ -92,7 +98,7 @@ func _make_hud_button(text: String) -> Button:
 	var button: Button = Button.new()
 	button.text = text
 	button.flat = true
-	button.custom_minimum_size = Vector2(96, 42)
+	button.custom_minimum_size = Vector2(112, 42)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.add_theme_font_size_override("font_size", 22)
 	button.add_theme_color_override("font_color", Color.WHITE)
@@ -104,6 +110,13 @@ func _make_hud_button(text: String) -> Button:
 	button.add_theme_constant_override("shadow_offset_y", 2)
 	button.focus_mode = Control.FOCUS_NONE
 	return button
+
+func _apply_button_icon(button: Button, icon: Texture2D) -> void:
+	button.icon = icon
+	button.expand_icon = true
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.add_theme_constant_override("h_separation", 8)
+	button.add_theme_constant_override("icon_max_width", 22)
 
 func update_gold(gold: int) -> void:
 	if _gold_label:
@@ -122,6 +135,7 @@ func update_monster_count(_count: int) -> void:
 func update_pause_button(is_paused: bool) -> void:
 	if _pause_btn:
 		_pause_btn.text = "继续" if is_paused else "暂停"
+		_pause_btn.icon = ICON_PLAY if is_paused else ICON_PAUSE
 
 func _on_gold_changed(new_gold: int) -> void:
 	update_gold(new_gold)

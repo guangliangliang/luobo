@@ -5,6 +5,9 @@ const LOGO_TEXTURE: Texture2D = preload("res://assets/ui/menu/logo_village_defen
 const BUTTON_NORMAL: Texture2D = preload("res://assets/ui/buttons/button_menu_normal.png")
 const BUTTON_HOVER: Texture2D = preload("res://assets/ui/buttons/button_menu_hover.png")
 const BUTTON_PRESSED: Texture2D = preload("res://assets/ui/buttons/button_menu_pressed.png")
+const ICON_SETTINGS: Texture2D = preload("res://assets/ui/icons/icon_settings.svg")
+const ICON_PLAY: Texture2D = preload("res://assets/ui/icons/icon_play.svg")
+const ICON_BOOK: Texture2D = preload("res://assets/ui/icons/icon_book.svg")
 const BUTTON_REGION: Rect2 = Rect2(72.5, 175, 622.5, 144.5)
 
 const PARALLAX_STRENGTH: float = 40.0
@@ -73,12 +76,14 @@ func _setup_ui() -> void:
 	add_child(top_buttons)
 
 	var settings_btn: Button = _make_top_button("设置")
+	_apply_button_icon(settings_btn, ICON_SETTINGS)
 	settings_btn.position = Vector2(0, 0)
 	settings_btn.size = Vector2(88, 44)
 	settings_btn.pressed.connect(_on_settings_pressed)
 	top_buttons.add_child(settings_btn)
 
 	var codex_btn: Button = _make_top_button("图鉴")
+	_apply_button_icon(codex_btn, ICON_BOOK)
 	codex_btn.position = Vector2(100, 0)
 	codex_btn.size = Vector2(88, 44)
 	codex_btn.pressed.connect(_on_codex_pressed)
@@ -109,6 +114,7 @@ func _setup_ui() -> void:
 	start_btn.text = "开始游戏"
 	start_btn.custom_minimum_size = Vector2(252, 78)
 	_apply_menu_button_style(start_btn, 24)
+	_apply_button_icon(start_btn, ICON_PLAY)
 	start_btn.pressed.connect(_on_start_pressed)
 	center.add_child(start_btn)
 
@@ -275,6 +281,13 @@ func _make_top_button(text: String) -> Button:
 	button.add_theme_color_override("font_hover_color", Color(1.0, 0.96, 0.62))
 	button.add_theme_color_override("font_pressed_color", Color(0.95, 0.76, 0.35))
 	return button
+
+func _apply_button_icon(button: Button, icon: Texture2D) -> void:
+	button.icon = icon
+	button.expand_icon = true
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.add_theme_constant_override("h_separation", 7)
+	button.add_theme_constant_override("icon_max_width", 24)
 
 func _create_top_button_stylebox(color: Color) -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()

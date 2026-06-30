@@ -1,6 +1,8 @@
 extends Control
 
 const MENU_BG: Texture2D = preload("res://assets/ui/menu/menu_bg_village.png")
+const BACK_BUTTON_TEXTURE: Texture2D = preload("res://assets/ui/icons/icon_back_turn.svg")
+const ICON_PLAY: Texture2D = preload("res://assets/ui/icons/icon_play.svg")
 const BUTTON_NORMAL: Texture2D = preload("res://assets/ui/buttons/button_menu_normal.png")
 const BUTTON_HOVER: Texture2D = preload("res://assets/ui/buttons/button_menu_hover.png")
 const BUTTON_PRESSED: Texture2D = preload("res://assets/ui/buttons/button_menu_pressed.png")
@@ -9,6 +11,8 @@ const TOWER_TYPES: Array[String] = ["arrow", "cannon", "ice"]
 const MAP_SOURCE_SIZE: Vector2 = Vector2(1280, 720)
 const CONTENT_MAX_WIDTH: float = 1180.0
 const CONTENT_MARGIN: float = 24.0
+const BACK_BUTTON_SIZE: Vector2 = Vector2(68, 68)
+const BACK_BUTTON_MARGIN: float = 22.0
 
 var _level_data: LevelData
 
@@ -92,19 +96,42 @@ func _setup_ui() -> void:
 	footer.add_theme_constant_override("separation", 22)
 	root.add_child(footer)
 
-	var back_btn: Button = Button.new()
-	back_btn.text = "返回关卡"
-	back_btn.custom_minimum_size = Vector2(230, 70)
-	_apply_menu_button_style(back_btn, 22)
-	back_btn.pressed.connect(_on_back_pressed)
-	footer.add_child(back_btn)
-
 	var start_btn: Button = Button.new()
 	start_btn.text = "开始战斗"
 	start_btn.custom_minimum_size = Vector2(260, 76)
 	_apply_menu_button_style(start_btn, 24)
+	_apply_button_icon(start_btn, ICON_PLAY)
 	start_btn.pressed.connect(_on_start_pressed)
 	footer.add_child(start_btn)
+
+	add_child(_create_back_icon_button("返回关卡"))
+
+func _create_back_icon_button(tooltip: String) -> Button:
+	var button: Button = Button.new()
+	button.text = ""
+	button.tooltip_text = ""
+	button.custom_minimum_size = BACK_BUTTON_SIZE
+	button.size = BACK_BUTTON_SIZE
+	button.position = Vector2(BACK_BUTTON_MARGIN, BACK_BUTTON_MARGIN)
+	button.focus_mode = Control.FOCUS_NONE
+	_apply_back_icon_button_style(button)
+	button.pressed.connect(_on_back_pressed)
+
+	var icon: TextureRect = TextureRect.new()
+	icon.texture = BACK_BUTTON_TEXTURE
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	button.add_child(icon)
+	return button
+
+func _apply_back_icon_button_style(button: Button) -> void:
+	var empty_style: StyleBoxEmpty = StyleBoxEmpty.new()
+	button.add_theme_stylebox_override("normal", empty_style)
+	button.add_theme_stylebox_override("hover", empty_style)
+	button.add_theme_stylebox_override("pressed", empty_style)
+	button.add_theme_stylebox_override("focus", empty_style)
 
 func _create_panel(title_text: String, min_size: Vector2) -> PanelContainer:
 	var panel: PanelContainer = PanelContainer.new()
@@ -411,6 +438,13 @@ func _apply_menu_button_style(button: Button, font_size: int) -> void:
 	button.add_theme_constant_override("outline_size", 2)
 	button.add_theme_constant_override("shadow_offset_x", 2)
 	button.add_theme_constant_override("shadow_offset_y", 2)
+
+func _apply_button_icon(button: Button, icon: Texture2D) -> void:
+	button.icon = icon
+	button.expand_icon = true
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.add_theme_constant_override("h_separation", 8)
+	button.add_theme_constant_override("icon_max_width", 30)
 
 func _make_menu_button_style(texture: Texture2D) -> StyleBoxTexture:
 	var atlas: AtlasTexture = AtlasTexture.new()

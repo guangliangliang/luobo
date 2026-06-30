@@ -5,6 +5,9 @@ signal level_info_pressed
 signal restart_level_pressed
 signal continue_pressed
 
+const ICON_BOOK: Texture2D = preload("res://assets/ui/icons/icon_book.svg")
+const ICON_PLAY: Texture2D = preload("res://assets/ui/icons/icon_play.svg")
+
 var _bgm_slider: HSlider
 var _bgm_label: Label
 var _sfx_slider: HSlider
@@ -67,6 +70,7 @@ func _setup_ui() -> void:
 	vbox.add_child(exit_btn)
 
 	var info_btn: Button = _make_menu_button("本关说明")
+	_apply_button_icon(info_btn, ICON_BOOK)
 	info_btn.pressed.connect(func(): level_info_pressed.emit())
 	vbox.add_child(info_btn)
 
@@ -75,6 +79,7 @@ func _setup_ui() -> void:
 	vbox.add_child(restart_btn)
 
 	var continue_btn: Button = _make_menu_button("继续游戏")
+	_apply_button_icon(continue_btn, ICON_PLAY)
 	continue_btn.pressed.connect(func(): continue_pressed.emit())
 	vbox.add_child(continue_btn)
 
@@ -150,6 +155,13 @@ func _make_menu_button(text: String) -> Button:
 	button.add_theme_constant_override("outline_size", 2)
 	button.focus_mode = Control.FOCUS_NONE
 	return button
+
+func _apply_button_icon(button: Button, icon: Texture2D) -> void:
+	button.icon = icon
+	button.expand_icon = true
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.add_theme_constant_override("h_separation", 8)
+	button.add_theme_constant_override("icon_max_width", 24)
 
 func _make_separator() -> HSeparator:
 	var separator: HSeparator = HSeparator.new()
