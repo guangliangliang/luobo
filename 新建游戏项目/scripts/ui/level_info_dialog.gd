@@ -5,6 +5,7 @@ signal close_pressed
 var _tower_tab_btn: Button
 var _enemy_tab_btn: Button
 var _selector_row: HBoxContainer
+var _content_scroll: ScrollContainer
 var _content_list: VBoxContainer
 var _active_tab: String = "tower"
 var _selected_tower_type: String = ""
@@ -20,7 +21,7 @@ func _setup_ui() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var bg: ColorRect = ColorRect.new()
-	bg.color = Color(0, 0, 0, 0.58)
+	bg.color = Color(0.12, 0.07, 0.02, 0.50)
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(bg)
@@ -53,16 +54,22 @@ func _setup_ui() -> void:
 	var title: Label = Label.new()
 	title.text = "本关说明"
 	title.add_theme_font_size_override("font_size", 30)
-	title.add_theme_color_override("font_color", Color.WHITE)
+	title.add_theme_color_override("font_color", Color(0.36, 0.17, 0.04))
+	title.add_theme_color_override("font_outline_color", Color(1.0, 0.84, 0.38, 0.55))
+	title.add_theme_constant_override("outline_size", 2)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 
 	var close_btn: Button = Button.new()
-	close_btn.text = "X"
+	close_btn.text = "×"
 	close_btn.custom_minimum_size = Vector2(42, 38)
 	close_btn.focus_mode = Control.FOCUS_NONE
 	close_btn.add_theme_font_size_override("font_size", 20)
+	close_btn.add_theme_stylebox_override("normal", _create_close_stylebox(false))
+	close_btn.add_theme_stylebox_override("hover", _create_close_stylebox(true))
+	close_btn.add_theme_stylebox_override("pressed", _create_close_stylebox(true))
+	close_btn.add_theme_color_override("font_color", Color(0.98, 0.90, 0.76))
 	close_btn.pressed.connect(func(): close_pressed.emit())
 	header.add_child(close_btn)
 
@@ -97,16 +104,16 @@ func _setup_ui() -> void:
 	_selector_row.add_theme_constant_override("separation", 12)
 	selector_margin.add_child(_selector_row)
 
-	var scroll: ScrollContainer = ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(620, 250)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vbox.add_child(scroll)
+	_content_scroll = ScrollContainer.new()
+	_content_scroll.custom_minimum_size = Vector2(620, 300)
+	_content_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(_content_scroll)
 
 	_content_list = VBoxContainer.new()
 	_content_list.add_theme_constant_override("separation", 10)
 	_content_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(_content_list)
+	_content_scroll.add_child(_content_list)
 
 func _make_tab_button(text: String) -> Button:
 	var button: Button = Button.new()
@@ -119,9 +126,9 @@ func _make_tab_button(text: String) -> Button:
 	button.add_theme_stylebox_override("hover", _create_tab_stylebox(true))
 	button.add_theme_stylebox_override("pressed", _create_tab_stylebox(true))
 	button.add_theme_stylebox_override("disabled", _create_tab_stylebox(true))
-	button.add_theme_color_override("font_color", Color(0.86, 0.90, 0.98))
-	button.add_theme_color_override("font_hover_color", Color.WHITE)
-	button.add_theme_color_override("font_pressed_color", Color.WHITE)
+	button.add_theme_color_override("font_color", Color(0.42, 0.23, 0.09))
+	button.add_theme_color_override("font_hover_color", Color(0.23, 0.10, 0.03))
+	button.add_theme_color_override("font_pressed_color", Color(0.23, 0.10, 0.03))
 	button.add_theme_color_override("font_disabled_color", Color(0.18, 0.11, 0.02))
 	return button
 
@@ -156,7 +163,7 @@ func _make_avatar_button(label_text: String, image_path: String, selected: bool)
 	var label: Label = Label.new()
 	label.text = label_text
 	label.add_theme_font_size_override("font_size", 14)
-	label.add_theme_color_override("font_color", Color(0.94, 0.96, 1.0))
+	label.add_theme_color_override("font_color", Color(0.34, 0.18, 0.07))
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -192,8 +199,8 @@ func _refresh_tabs() -> void:
 		return
 	_tower_tab_btn.add_theme_stylebox_override("normal", _create_tab_stylebox(_active_tab == "tower"))
 	_enemy_tab_btn.add_theme_stylebox_override("normal", _create_tab_stylebox(_active_tab == "enemy"))
-	_tower_tab_btn.add_theme_color_override("font_color", Color(0.18, 0.11, 0.02) if _active_tab == "tower" else Color(0.86, 0.90, 0.98))
-	_enemy_tab_btn.add_theme_color_override("font_color", Color(0.18, 0.11, 0.02) if _active_tab == "enemy" else Color(0.86, 0.90, 0.98))
+	_tower_tab_btn.add_theme_color_override("font_color", Color(0.18, 0.09, 0.02) if _active_tab == "tower" else Color(0.42, 0.23, 0.09))
+	_enemy_tab_btn.add_theme_color_override("font_color", Color(0.18, 0.09, 0.02) if _active_tab == "enemy" else Color(0.42, 0.23, 0.09))
 
 func _clear_content() -> void:
 	if not _content_list:
@@ -245,15 +252,22 @@ func _select_enemy(monster_type: String) -> void:
 
 func _show_selected_tower() -> void:
 	_clear_content()
+	_set_content_scroll_enabled(false)
 	var data: TowerData = GameManager.get_tower_data(_selected_tower_type)
 	if data:
 		_content_list.add_child(_create_tower_card(data))
 
 func _show_selected_enemy() -> void:
 	_clear_content()
+	_set_content_scroll_enabled(true)
 	var data: MonsterData = GameManager.get_monster_data(_selected_monster_type)
 	if data:
 		_content_list.add_child(_create_enemy_card(data))
+
+func _set_content_scroll_enabled(enabled: bool) -> void:
+	if not _content_scroll:
+		return
+	_content_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO if enabled else ScrollContainer.SCROLL_MODE_DISABLED
 
 func _create_tower_card(data: TowerData) -> Control:
 	var card: PanelContainer = _make_card()
@@ -368,7 +382,7 @@ func _make_title_label(text: String) -> Label:
 	var label: Label = Label.new()
 	label.text = text
 	label.add_theme_font_size_override("font_size", 21)
-	label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.34))
+	label.add_theme_color_override("font_color", Color(0.50, 0.22, 0.05))
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return label
 
@@ -376,7 +390,7 @@ func _make_body_label(text: String) -> Label:
 	var label: Label = Label.new()
 	label.text = text
 	label.add_theme_font_size_override("font_size", 17)
-	label.add_theme_color_override("font_color", Color(0.92, 0.94, 0.98))
+	label.add_theme_color_override("font_color", Color(0.30, 0.18, 0.08))
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return label
 
@@ -530,7 +544,7 @@ func _monster_description(data: MonsterData) -> String:
 
 func _create_panel_stylebox() -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.09, 0.10, 0.13, 0.97)
+	style.bg_color = Color(0.93, 0.78, 0.48, 0.98)
 	style.corner_radius_top_left = 8
 	style.corner_radius_top_right = 8
 	style.corner_radius_bottom_left = 8
@@ -539,12 +553,19 @@ func _create_panel_stylebox() -> StyleBoxFlat:
 	style.border_width_top = 2
 	style.border_width_right = 2
 	style.border_width_bottom = 2
-	style.border_color = Color(0.42, 0.50, 0.62)
+	style.border_width_left = 4
+	style.border_width_top = 4
+	style.border_width_right = 4
+	style.border_width_bottom = 4
+	style.border_color = Color(0.48, 0.25, 0.08)
+	style.shadow_color = Color(0, 0, 0, 0.45)
+	style.shadow_size = 14
+	style.shadow_offset = Vector2(0, 5)
 	return style
 
 func _create_card_stylebox() -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.15, 0.17, 0.21, 0.96)
+	style.bg_color = Color(0.99, 0.88, 0.60, 0.96)
 	style.corner_radius_top_left = 8
 	style.corner_radius_top_right = 8
 	style.corner_radius_bottom_left = 8
@@ -553,12 +574,12 @@ func _create_card_stylebox() -> StyleBoxFlat:
 	style.border_width_top = 1
 	style.border_width_right = 1
 	style.border_width_bottom = 1
-	style.border_color = Color(0.32, 0.38, 0.46)
+	style.border_color = Color(0.68, 0.42, 0.16)
 	return style
 
 func _create_selector_panel_stylebox() -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.11, 0.12, 0.16, 0.92)
+	style.bg_color = Color(0.74, 0.48, 0.20, 0.42)
 	style.corner_radius_top_left = 8
 	style.corner_radius_top_right = 8
 	style.corner_radius_bottom_left = 8
@@ -567,12 +588,12 @@ func _create_selector_panel_stylebox() -> StyleBoxFlat:
 	style.border_width_top = 1
 	style.border_width_right = 1
 	style.border_width_bottom = 1
-	style.border_color = Color(0.26, 0.31, 0.39)
+	style.border_color = Color(0.64, 0.37, 0.13)
 	return style
 
 func _create_tab_stylebox(selected: bool) -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(1.0, 0.74, 0.22, 1.0) if selected else Color(0.17, 0.20, 0.27, 0.96)
+	style.bg_color = Color(1.0, 0.74, 0.22, 1.0) if selected else Color(0.82, 0.57, 0.25, 0.88)
 	style.corner_radius_top_left = 12
 	style.corner_radius_top_right = 12
 	style.corner_radius_bottom_left = 12
@@ -581,7 +602,7 @@ func _create_tab_stylebox(selected: bool) -> StyleBoxFlat:
 	style.border_width_top = 2
 	style.border_width_right = 2
 	style.border_width_bottom = 2
-	style.border_color = Color(1.0, 0.90, 0.46) if selected else Color(0.36, 0.43, 0.55)
+	style.border_color = Color(1.0, 0.90, 0.46) if selected else Color(0.58, 0.33, 0.12)
 	style.shadow_color = Color(1.0, 0.54, 0.12, 0.36) if selected else Color(0, 0, 0, 0.22)
 	style.shadow_size = 8 if selected else 3
 	style.shadow_offset = Vector2(0, 2)
@@ -589,7 +610,7 @@ func _create_tab_stylebox(selected: bool) -> StyleBoxFlat:
 
 func _create_avatar_stylebox(selected: bool) -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.42, 0.30, 0.12, 1.0) if selected else Color(0.16, 0.18, 0.23, 0.95)
+	style.bg_color = Color(0.88, 0.60, 0.24, 1.0) if selected else Color(0.96, 0.78, 0.46, 0.95)
 	style.corner_radius_top_left = 10
 	style.corner_radius_top_right = 10
 	style.corner_radius_bottom_left = 10
@@ -598,7 +619,7 @@ func _create_avatar_stylebox(selected: bool) -> StyleBoxFlat:
 	style.border_width_top = 3 if selected else 1
 	style.border_width_right = 3 if selected else 1
 	style.border_width_bottom = 3 if selected else 1
-	style.border_color = Color(1.0, 0.82, 0.28) if selected else Color(0.34, 0.40, 0.49)
+	style.border_color = Color(1.0, 0.82, 0.28) if selected else Color(0.62, 0.38, 0.16)
 	style.shadow_color = Color(1.0, 0.58, 0.10, 0.44) if selected else Color(0, 0, 0, 0.20)
 	style.shadow_size = 10 if selected else 2
 	style.shadow_offset = Vector2(0, 2)
@@ -606,7 +627,7 @@ func _create_avatar_stylebox(selected: bool) -> StyleBoxFlat:
 
 func _create_level_stylebox() -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.10, 0.12, 0.16, 0.95)
+	style.bg_color = Color(0.86, 0.62, 0.30, 0.58)
 	style.corner_radius_top_left = 8
 	style.corner_radius_top_right = 8
 	style.corner_radius_bottom_left = 8
@@ -615,7 +636,21 @@ func _create_level_stylebox() -> StyleBoxFlat:
 	style.border_width_top = 1
 	style.border_width_right = 1
 	style.border_width_bottom = 1
-	style.border_color = Color(0.30, 0.36, 0.45)
+	style.border_color = Color(0.58, 0.34, 0.13)
+	return style
+
+func _create_close_stylebox(hovered: bool) -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.46, 0.16, 0.08, 0.98) if hovered else Color(0.26, 0.13, 0.08, 0.94)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.border_color = Color(0.74, 0.45, 0.20)
 	return style
 
 func show_dialog() -> void:

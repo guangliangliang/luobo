@@ -20,7 +20,7 @@ func _setup_ui() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	var bg: ColorRect = ColorRect.new()
-	bg.color = Color(0, 0, 0, 0.55)
+	bg.color = Color(0.12, 0.07, 0.02, 0.48)
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(bg)
@@ -50,7 +50,9 @@ func _setup_ui() -> void:
 	var title_label: Label = Label.new()
 	title_label.text = "游戏设置"
 	title_label.add_theme_font_size_override("font_size", 30)
-	title_label.add_theme_color_override("font_color", Color.WHITE)
+	title_label.add_theme_color_override("font_color", Color(0.36, 0.17, 0.04))
+	title_label.add_theme_color_override("font_outline_color", Color(1.0, 0.86, 0.45, 0.55))
+	title_label.add_theme_constant_override("outline_size", 2)
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title_label)
 
@@ -84,7 +86,7 @@ func _create_bgm_control(parent: VBoxContainer) -> void:
 	var bgm_title: Label = Label.new()
 	bgm_title.text = "背景音乐"
 	bgm_title.add_theme_font_size_override("font_size", 20)
-	bgm_title.add_theme_color_override("font_color", Color(0.92, 0.95, 1.0))
+	bgm_title.add_theme_color_override("font_color", Color(0.42, 0.22, 0.07))
 	bgm_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bgm_vbox.add_child(bgm_title)
 
@@ -100,7 +102,7 @@ func _create_bgm_control(parent: VBoxContainer) -> void:
 	_bgm_label = Label.new()
 	_bgm_label.text = "音量: %d%%" % int(_bgm_slider.value * 100)
 	_bgm_label.add_theme_font_size_override("font_size", 17)
-	_bgm_label.add_theme_color_override("font_color", Color(0.85, 0.88, 0.95))
+	_bgm_label.add_theme_color_override("font_color", Color(0.56, 0.35, 0.14))
 	_bgm_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bgm_vbox.add_child(_bgm_label)
 
@@ -112,7 +114,7 @@ func _create_sfx_control(parent: VBoxContainer) -> void:
 	var sfx_title: Label = Label.new()
 	sfx_title.text = "音效"
 	sfx_title.add_theme_font_size_override("font_size", 20)
-	sfx_title.add_theme_color_override("font_color", Color(0.92, 0.95, 1.0))
+	sfx_title.add_theme_color_override("font_color", Color(0.42, 0.22, 0.07))
 	sfx_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sfx_vbox.add_child(sfx_title)
 
@@ -128,7 +130,7 @@ func _create_sfx_control(parent: VBoxContainer) -> void:
 	_sfx_label = Label.new()
 	_sfx_label.text = "音量: %d%%" % int(_sfx_slider.value * 100)
 	_sfx_label.add_theme_font_size_override("font_size", 17)
-	_sfx_label.add_theme_color_override("font_color", Color(0.85, 0.88, 0.95))
+	_sfx_label.add_theme_color_override("font_color", Color(0.56, 0.35, 0.14))
 	_sfx_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sfx_vbox.add_child(_sfx_label)
 
@@ -138,6 +140,14 @@ func _make_menu_button(text: String) -> Button:
 	button.custom_minimum_size = Vector2(180, 44)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.add_theme_font_size_override("font_size", 21)
+	button.add_theme_stylebox_override("normal", _create_menu_button_stylebox(false))
+	button.add_theme_stylebox_override("hover", _create_menu_button_stylebox(true))
+	button.add_theme_stylebox_override("pressed", _create_menu_button_stylebox(true))
+	button.add_theme_color_override("font_color", Color(0.98, 0.88, 0.58))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 0.96, 0.70))
+	button.add_theme_color_override("font_pressed_color", Color(0.93, 0.72, 0.32))
+	button.add_theme_color_override("font_outline_color", Color(0.20, 0.08, 0.02, 0.95))
+	button.add_theme_constant_override("outline_size", 2)
 	button.focus_mode = Control.FOCUS_NONE
 	return button
 
@@ -148,7 +158,7 @@ func _make_separator() -> HSeparator:
 
 func _create_panel_stylebox() -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.09, 0.12, 0.96)
+	style.bg_color = Color(0.93, 0.78, 0.48, 0.98)
 	style.corner_radius_top_left = 8
 	style.corner_radius_top_right = 8
 	style.corner_radius_bottom_left = 8
@@ -157,7 +167,31 @@ func _create_panel_stylebox() -> StyleBoxFlat:
 	style.border_width_top = 2
 	style.border_width_right = 2
 	style.border_width_bottom = 2
-	style.border_color = Color(0.36, 0.45, 0.56)
+	style.border_width_left = 4
+	style.border_width_top = 4
+	style.border_width_right = 4
+	style.border_width_bottom = 4
+	style.border_color = Color(0.45, 0.24, 0.08)
+	style.shadow_color = Color(0.05, 0.02, 0.0, 0.45)
+	style.shadow_size = 14
+	style.shadow_offset = Vector2(0, 5)
+	return style
+
+func _create_menu_button_stylebox(hovered: bool) -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.45, 0.24, 0.09, 0.98) if hovered else Color(0.30, 0.16, 0.07, 0.96)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.88, 0.61, 0.25) if hovered else Color(0.64, 0.39, 0.16)
+	style.shadow_color = Color(0, 0, 0, 0.25)
+	style.shadow_size = 5
+	style.shadow_offset = Vector2(0, 2)
 	return style
 
 func _on_bgm_volume_changed(value: float) -> void:
