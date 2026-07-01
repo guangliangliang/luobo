@@ -90,7 +90,16 @@ func _hit() -> void:
 	var spawner: Node = _spawner if (_spawner and is_instance_valid(_spawner)) else _find_spawner()
 	var splash_radius_squared: float = _splash_radius * _splash_radius
 	
-	if _splash_radius > 0:
+	if _tower_type == "ice" and _splash_radius > 0:
+		if _target and is_instance_valid(_target) and not _target.is_dead:
+			var impact_position: Vector2 = _target.global_position
+			_target.take_damage(_damage)
+			if spawner and _slow_percent > 0:
+				for monster in spawner.get_all_monsters():
+					if is_instance_valid(monster) and not monster.is_dead:
+						if monster.global_position.distance_squared_to(impact_position) <= splash_radius_squared:
+							monster.apply_slow(_slow_percent, _slow_duration)
+	elif _splash_radius > 0:
 		if spawner and _target and is_instance_valid(_target):
 			var impact_position: Vector2 = _target.global_position
 			for monster in spawner.get_all_monsters():

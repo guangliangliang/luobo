@@ -217,7 +217,7 @@ func _tower_role(tower_type: String) -> String:
 		"cannon":
 			return "范围"
 		"ice":
-			return "减速"
+			return "范围减速"
 		_:
 			return ""
 
