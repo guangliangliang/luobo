@@ -2,6 +2,8 @@ extends Control
 
 signal close_pressed
 
+const ICON_CLOSE: Texture2D = preload("res://assets/ui/icons/icon_close.svg")
+
 var _tower_tab_btn: Button
 var _enemy_tab_btn: Button
 var _selector_row: HBoxContainer
@@ -63,14 +65,13 @@ func _setup_ui() -> void:
 	header.add_child(title)
 
 	var close_btn: Button = Button.new()
-	close_btn.text = "×"
+	close_btn.name = "SvgCloseButton"
 	close_btn.custom_minimum_size = Vector2(42, 38)
 	close_btn.focus_mode = Control.FOCUS_NONE
-	close_btn.add_theme_font_size_override("font_size", 20)
-	close_btn.add_theme_stylebox_override("normal", _create_close_stylebox(false))
-	close_btn.add_theme_stylebox_override("hover", _create_close_stylebox(true))
-	close_btn.add_theme_stylebox_override("pressed", _create_close_stylebox(true))
-	close_btn.add_theme_color_override("font_color", Color(0.98, 0.90, 0.76))
+	close_btn.add_theme_stylebox_override("normal", _create_transparent_stylebox())
+	close_btn.add_theme_stylebox_override("hover", _create_transparent_stylebox())
+	close_btn.add_theme_stylebox_override("pressed", _create_transparent_stylebox())
+	_add_close_icon(close_btn)
 	close_btn.pressed.connect(func(): close_pressed.emit())
 	header.add_child(close_btn)
 
@@ -650,6 +651,29 @@ func _create_close_stylebox(hovered: bool) -> StyleBoxFlat:
 	style.border_width_bottom = 1
 	style.border_color = Color(0.74, 0.45, 0.20)
 	return style
+
+func _create_transparent_stylebox() -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0)
+	style.border_width_left = 0
+	style.border_width_top = 0
+	style.border_width_right = 0
+	style.border_width_bottom = 0
+	return style
+
+func _add_close_icon(button: Button) -> void:
+	var icon: TextureRect = TextureRect.new()
+	icon.name = "SvgCloseIcon"
+	icon.texture = ICON_CLOSE
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	icon.offset_left = 1
+	icon.offset_top = 0
+	icon.offset_right = -1
+	icon.offset_bottom = 0
+	button.add_child(icon)
 
 func show_dialog() -> void:
 	visible = true
