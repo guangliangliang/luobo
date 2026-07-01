@@ -20,6 +20,8 @@ const CONFIRM_EXIT_LEVEL_DIALOG_SCRIPT: GDScript = preload("res://scripts/ui/con
 const BUILD_SPOT_REGION := Rect2(102, 46, 822.5, 490.5)
 const START_COUNTDOWN_SECONDS := 3
 const START_MESSAGE_DURATION := 0.2
+const NORMAL_TIME_SCALE := 1.0
+const FAST_TIME_SCALE := 2.0
 
 var _level_data: LevelData
 var _spawner: Node
@@ -39,6 +41,7 @@ var _village_health_bar: ProgressBar
 var _build_spot_sprites: Dictionary = {}
 var _selected_tower: Node2D = null
 var _is_paused: bool = false
+var _is_fast_speed: bool = false
 var _game_started: bool = false
 var _level_info_dialog: Control
 var _confirm_exit_level_dialog: Control
@@ -46,6 +49,7 @@ var _suppress_tower_menu_gold_update: bool = false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	Engine.time_scale = NORMAL_TIME_SCALE
 	AudioManager.play_bgm("battle")
 	_level_data = GameManager.get_level_data(GameManager.current_level_id)
 	if not _level_data:
@@ -57,6 +61,9 @@ func _ready() -> void:
 	_create_battle_scene()
 	GameManager.start_battle(GameManager.current_level_id)
 	_start_countdown()
+
+func _exit_tree() -> void:
+	Engine.time_scale = NORMAL_TIME_SCALE
 
 func _get_level_monster_types() -> Array:
 	var monster_types: Array = []
@@ -381,6 +388,7 @@ func _create_ui() -> void:
 
 func _connect_signals() -> void:
 	_hud.pause_pressed.connect(_on_pause_pressed)
+	_hud.speed_pressed.connect(_on_speed_pressed)
 	_hud.settings_pressed.connect(_on_settings_pressed)
 	_settings_dialog.exit_level_pressed.connect(_on_exit_level)
 	_settings_dialog.level_info_pressed.connect(_on_level_info)
@@ -404,6 +412,11 @@ func _connect_signals() -> void:
 
 func _on_pause_pressed() -> void:
 	_toggle_pause()
+
+func _on_speed_pressed() -> void:
+	_is_fast_speed = !_is_fast_speed
+	Engine.time_scale = FAST_TIME_SCALE if _is_fast_speed else NORMAL_TIME_SCALE
+	_hud.update_speed_button(_is_fast_speed)
 
 func _on_settings_pressed() -> void:
 	if not _is_paused:

@@ -2,6 +2,7 @@ extends Control
 
 signal pause_pressed
 signal settings_pressed
+signal speed_pressed
 
 const ICON_PAUSE: Texture2D = preload("res://assets/ui/icons/icon_pause.svg")
 const ICON_PLAY: Texture2D = preload("res://assets/ui/icons/icon_play.svg")
@@ -10,6 +11,7 @@ const ICON_SETTINGS: Texture2D = preload("res://assets/ui/icons/icon_settings.sv
 var _gold_label: Label
 var _wave_label: Label
 var _pause_btn: Button
+var _speed_btn: Button
 var _settings_btn: Button
 
 func _ready() -> void:
@@ -58,6 +60,11 @@ func _setup_ui() -> void:
 	_apply_button_icon(_pause_btn, ICON_PAUSE)
 	_pause_btn.pressed.connect(func(): pause_pressed.emit())
 	h_box.add_child(_pause_btn)
+
+	_speed_btn = _make_hud_button("1倍速")
+	_speed_btn.custom_minimum_size = Vector2(98, 42)
+	_speed_btn.pressed.connect(func(): speed_pressed.emit())
+	h_box.add_child(_speed_btn)
 
 	_settings_btn = _make_hud_button("设置")
 	_apply_button_icon(_settings_btn, ICON_SETTINGS)
@@ -136,6 +143,11 @@ func update_pause_button(is_paused: bool) -> void:
 	if _pause_btn:
 		_pause_btn.text = "继续" if is_paused else "暂停"
 		_pause_btn.icon = ICON_PLAY if is_paused else ICON_PAUSE
+
+func update_speed_button(is_fast: bool) -> void:
+	if _speed_btn:
+		_speed_btn.text = "2倍速" if is_fast else "1倍速"
+		_speed_btn.add_theme_color_override("font_color", Color(1.0, 0.9, 0.45) if is_fast else Color.WHITE)
 
 func _on_gold_changed(new_gold: int) -> void:
 	update_gold(new_gold)
