@@ -258,7 +258,7 @@ func _create_enemy_row(monster_type: String, monster_data: MonsterData) -> Contr
 
 	info.add_child(_create_item_name_label(_monster_display_name(monster_type, monster_data)))
 	info.add_child(_create_stat_label("生命 %d" % monster_data.max_health))
-	info.add_child(_create_stat_label("速度 %.0f  奖励 %d" % [monster_data.move_speed, monster_data.reward]))
+	info.add_child(_create_stat_label("速度 %.0f  奖励 %s" % [monster_data.move_speed, _format_level_reward(monster_type, monster_data.reward)]))
 	info.add_child(_create_stat_label(_enemy_trait(monster_data)))
 	return row
 
@@ -350,6 +350,25 @@ func _get_level_monster_types() -> Array[String]:
 		if not wave.support_monster_type.is_empty() and not types.has(wave.support_monster_type):
 			types.append(wave.support_monster_type)
 	return types
+
+func _format_level_reward(monster_type: String, base_reward: int) -> String:
+	var rewards: Array[int] = []
+	for wave: WaveData in _level_data.waves:
+		if wave.monster_type == monster_type:
+			rewards.append(_get_wave_reward(base_reward, wave.reward_multiplier))
+		if wave.support_monster_type == monster_type:
+			rewards.append(_get_wave_reward(base_reward, wave.reward_multiplier))
+	if rewards.is_empty():
+		return str(base_reward)
+	rewards.sort()
+	var min_reward: int = rewards[0]
+	var max_reward: int = rewards[rewards.size() - 1]
+	if min_reward == max_reward:
+		return str(min_reward)
+	return "%d-%d" % [min_reward, max_reward]
+
+func _get_wave_reward(base_reward: int, reward_multiplier: float) -> int:
+	return maxi(0, int(round(float(base_reward) * reward_multiplier)))
 
 func _create_item_name_label(text_value: String) -> Label:
 	var label: Label = Label.new()

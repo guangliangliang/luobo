@@ -12,6 +12,7 @@ count = 30
 spawn_interval = 0.36
 path_index = 1
 is_boss = false
+reward_multiplier = 0.48
 
 [sub_resource type="Resource" id="WaveData_wave2"]
 script = ExtResource("2_script")
@@ -20,6 +21,7 @@ count = 16
 spawn_interval = 0.42
 path_index = 1
 is_boss = false
+reward_multiplier = 0.42
 
 [sub_resource type="Resource" id="WaveData_wave3"]
 script = ExtResource("2_script")
@@ -28,6 +30,7 @@ count = 42
 spawn_interval = 0.30
 path_index = -1
 is_boss = false
+reward_multiplier = 0.32
 
 [sub_resource type="Resource" id="WaveData_wave4"]
 script = ExtResource("2_script")
@@ -36,6 +39,7 @@ count = 30
 spawn_interval = 0.34
 path_index = -1
 is_boss = false
+reward_multiplier = 0.28
 
 [sub_resource type="Resource" id="WaveData_wave5"]
 script = ExtResource("2_script")
@@ -44,6 +48,7 @@ count = 3
 spawn_interval = 0.95
 path_index = -1
 is_boss = false
+reward_multiplier = 0.3
 support_monster_type = "boar"
 support_count = 24
 support_spawn_interval = 0.30
@@ -55,6 +60,7 @@ count = 36
 spawn_interval = 0.30
 path_index = -1
 is_boss = false
+reward_multiplier = 0.23
 
 [sub_resource type="Resource" id="WaveData_wave7"]
 script = ExtResource("2_script")
@@ -63,6 +69,7 @@ count = 6
 spawn_interval = 0.85
 path_index = -1
 is_boss = true
+reward_multiplier = 0.32
 support_monster_type = "mountain_bandit"
 support_count = 18
 support_spawn_interval = 0.34
@@ -74,6 +81,7 @@ count = 4
 spawn_interval = 0.75
 path_index = -1
 is_boss = true
+reward_multiplier = 0.38
 support_monster_type = "wild_wolf"
 support_count = 36
 support_spawn_interval = 0.26

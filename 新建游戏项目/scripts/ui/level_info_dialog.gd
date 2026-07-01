@@ -294,7 +294,7 @@ func _create_enemy_card(data: MonsterData) -> Control:
 	var card: PanelContainer = _make_card()
 	var vbox: VBoxContainer = _make_card_body(card, _monster_image_path(data.monster_type))
 
-	var title: Label = _make_title_label("%s  |  击败奖励 %d 金币" % [_monster_name(data.monster_type), data.reward])
+	var title: Label = _make_title_label("%s  |  击败奖励 %s 金币" % [_monster_name(data.monster_type), _format_current_level_reward(data.monster_type, data.reward)])
 	vbox.add_child(title)
 
 	var stats: Label = _make_body_label("分类: %s    生命: %d    速度: %d    体型: %d" % [
@@ -308,6 +308,28 @@ func _create_enemy_card(data: MonsterData) -> Control:
 	var detail: Label = _make_body_label(_monster_description(data))
 	vbox.add_child(detail)
 	return card
+
+func _format_current_level_reward(monster_type: String, base_reward: int) -> String:
+	var level_data: LevelData = GameManager.get_level_data(GameManager.current_level_id)
+	if not level_data:
+		return str(base_reward)
+	var rewards: Array[int] = []
+	for wave: WaveData in level_data.waves:
+		if wave.monster_type == monster_type:
+			rewards.append(_get_wave_reward(base_reward, wave.reward_multiplier))
+		if wave.support_monster_type == monster_type:
+			rewards.append(_get_wave_reward(base_reward, wave.reward_multiplier))
+	if rewards.is_empty():
+		return str(base_reward)
+	rewards.sort()
+	var min_reward: int = rewards[0]
+	var max_reward: int = rewards[rewards.size() - 1]
+	if min_reward == max_reward:
+		return str(min_reward)
+	return "%d-%d" % [min_reward, max_reward]
+
+func _get_wave_reward(base_reward: int, reward_multiplier: float) -> int:
+	return maxi(0, int(round(float(base_reward) * reward_multiplier)))
 
 func _make_card() -> PanelContainer:
 	var card: PanelContainer = PanelContainer.new()

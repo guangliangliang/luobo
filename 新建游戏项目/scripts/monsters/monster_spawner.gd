@@ -65,16 +65,16 @@ func start_wave(wave_index: int) -> void:
 	if wave.support_monster_type != "" and wave.support_count > 0:
 		var front_support_count: int = ceili(float(wave.support_count) * 0.5)
 		var back_support_count: int = wave.support_count - front_support_count
-		_append_spawn_entries(wave.support_monster_type, front_support_count, wave.support_spawn_interval, path_indices)
-		_append_spawn_entries(wave.monster_type, wave.count, wave.spawn_interval, path_indices)
-		_append_spawn_entries(wave.support_monster_type, back_support_count, wave.support_spawn_interval, path_indices)
+		_append_spawn_entries(wave.support_monster_type, front_support_count, wave.support_spawn_interval, path_indices, wave.reward_multiplier)
+		_append_spawn_entries(wave.monster_type, wave.count, wave.spawn_interval, path_indices, wave.reward_multiplier)
+		_append_spawn_entries(wave.support_monster_type, back_support_count, wave.support_spawn_interval, path_indices, wave.reward_multiplier)
 	else:
-		_append_spawn_entries(wave.monster_type, wave.count, wave.spawn_interval, path_indices)
+		_append_spawn_entries(wave.monster_type, wave.count, wave.spawn_interval, path_indices, wave.reward_multiplier)
 	
 	_spawn_timer = 0.0
 	_emit_monster_count_changed()
 
-func _append_spawn_entries(monster_type: String, count: int, interval: float, path_indices: Array[int]) -> void:
+func _append_spawn_entries(monster_type: String, count: int, interval: float, path_indices: Array[int], reward_multiplier: float) -> void:
 	if count <= 0 or path_indices.is_empty():
 		return
 	for i in range(count):
@@ -82,6 +82,7 @@ func _append_spawn_entries(monster_type: String, count: int, interval: float, pa
 			"monster_type": monster_type,
 			"path_index": path_indices[i % path_indices.size()],
 			"interval": maxf(interval, MIN_SPAWN_INTERVAL),
+			"reward_multiplier": reward_multiplier,
 		})
 
 func get_active_count() -> int:
@@ -105,7 +106,7 @@ func _process(delta: float) -> void:
 	if _spawn_timer <= 0:
 		var info: Dictionary = _spawn_queue[_spawn_index]
 		_spawn_index += 1
-		_spawn_monster(info.monster_type, info.path_index)
+		_spawn_monster(info.monster_type, info.path_index, info.reward_multiplier)
 		_emit_monster_count_changed()
 		if _get_remaining_spawn_count() > 0:
 			_spawn_timer = _spawn_queue[_spawn_index].interval
@@ -123,7 +124,7 @@ func _emit_all_spawned_once() -> void:
 	_all_spawned_emitted = true
 	all_monsters_spawned.emit()
 
-func _spawn_monster(monster_type: String, path_index: int) -> void:
+func _spawn_monster(monster_type: String, path_index: int, reward_multiplier: float) -> void:
 	if path_index >= _path_nodes.size():
 		_emit_monster_count_changed()
 		return
@@ -131,12 +132,14 @@ func _spawn_monster(monster_type: String, path_index: int) -> void:
 	if not monster_data:
 		_emit_monster_count_changed()
 		return
+	var wave_monster_data: MonsterData = monster_data.duplicate() as MonsterData
+	wave_monster_data.reward = maxi(0, int(round(float(monster_data.reward) * reward_multiplier)))
 	
 	var follow: PathFollow2D = MONSTER_SCENE.instantiate()
 	var path: Path2D = _path_nodes[path_index]
 	path.add_child(follow)
 	
-	follow.setup(monster_data, _level_data.path_points[path_index])
+	follow.setup(wave_monster_data, _level_data.path_points[path_index])
 	
 	_active_monsters.append(follow)
 	follow.tree_exiting.connect(_on_monster_removed.bind(follow))
