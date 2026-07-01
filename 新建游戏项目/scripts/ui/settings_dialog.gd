@@ -69,8 +69,7 @@ func _setup_ui() -> void:
 	exit_btn.pressed.connect(func(): exit_level_pressed.emit())
 	vbox.add_child(exit_btn)
 
-	var info_btn: Button = _make_menu_button("本关说明")
-	_apply_button_icon(info_btn, ICON_BOOK)
+	var info_btn: Button = _make_icon_menu_button("本关说明", ICON_BOOK)
 	info_btn.pressed.connect(func(): level_info_pressed.emit())
 	vbox.add_child(info_btn)
 
@@ -78,8 +77,7 @@ func _setup_ui() -> void:
 	restart_btn.pressed.connect(func(): restart_level_pressed.emit())
 	vbox.add_child(restart_btn)
 
-	var continue_btn: Button = _make_menu_button("继续游戏")
-	_apply_button_icon(continue_btn, ICON_PLAY)
+	var continue_btn: Button = _make_icon_menu_button("继续游戏", ICON_PLAY)
 	continue_btn.pressed.connect(func(): continue_pressed.emit())
 	vbox.add_child(continue_btn)
 
@@ -156,12 +154,37 @@ func _make_menu_button(text: String) -> Button:
 	button.focus_mode = Control.FOCUS_NONE
 	return button
 
-func _apply_button_icon(button: Button, icon: Texture2D) -> void:
-	button.icon = icon
-	button.expand_icon = true
-	button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.add_theme_constant_override("h_separation", 8)
-	button.add_theme_constant_override("icon_max_width", 24)
+func _make_icon_menu_button(text: String, icon: Texture2D) -> Button:
+	var button: Button = _make_menu_button("")
+	var center: CenterContainer = CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(center)
+
+	var row: HBoxContainer = HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 8)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	center.add_child(row)
+
+	var icon_rect: TextureRect = TextureRect.new()
+	icon_rect.texture = icon
+	icon_rect.custom_minimum_size = Vector2(24, 24)
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(icon_rect)
+
+	var label: Label = Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", 21)
+	label.add_theme_color_override("font_color", Color(0.98, 0.88, 0.58))
+	label.add_theme_color_override("font_outline_color", Color(0.20, 0.08, 0.02, 0.95))
+	label.add_theme_constant_override("outline_size", 2)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(label)
+	return button
 
 func _make_separator() -> HSeparator:
 	var separator: HSeparator = HSeparator.new()
