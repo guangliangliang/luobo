@@ -169,7 +169,7 @@ func _create_village_health_marker() -> void:
 	box.add_child(row)
 
 	var icon: TextureRect = TextureRect.new()
-	icon.custom_minimum_size = Vector2(20, 20)
+	icon.custom_minimum_size = Vector2(34, 34)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.texture = HEALTH_ICON
@@ -567,6 +567,8 @@ func _on_gold_changed(_new_gold: int) -> void:
 		_build_menu.refresh_button_states()
 
 func _on_village_health_changed(_new_health: int) -> void:
+	if _hud:
+		_hud.update_health(_new_health)
 	_update_village_health_marker()
 	if _game_started and _new_health < GameManager.max_village_health:
 		_on_monster_reach_end()

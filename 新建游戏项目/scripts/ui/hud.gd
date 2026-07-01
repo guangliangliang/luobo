@@ -7,8 +7,10 @@ signal speed_pressed
 const ICON_PAUSE: Texture2D = preload("res://assets/ui/icons/icon_pause.svg")
 const ICON_PLAY: Texture2D = preload("res://assets/ui/icons/icon_play.svg")
 const ICON_SETTINGS: Texture2D = preload("res://assets/ui/icons/icon_settings.svg")
+const ICON_HEALTH: Texture2D = preload("res://assets/ui/icons/icon_health.png")
 
 var _gold_label: Label
+var _health_label: Label
 var _wave_label: Label
 var _pause_btn: Button
 var _speed_btn: Button
@@ -52,6 +54,20 @@ func _setup_ui() -> void:
 
 	_gold_label = _make_hud_label(Color(1.0, 0.86, 0.25))
 	h_box.add_child(_gold_label)
+
+	var health_box: HBoxContainer = HBoxContainer.new()
+	health_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	health_box.custom_minimum_size = Vector2(170, 42)
+	health_box.add_theme_constant_override("separation", 6)
+	health_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	h_box.add_child(health_box)
+
+	var health_icon: TextureRect = _make_hud_icon(ICON_HEALTH)
+	health_box.add_child(health_icon)
+
+	_health_label = _make_hud_label(Color(1.0, 0.38, 0.32))
+	_health_label.custom_minimum_size = Vector2(108, 42)
+	health_box.add_child(_health_label)
 
 	_wave_label = _make_hud_label(Color.WHITE)
 	h_box.add_child(_wave_label)
@@ -101,6 +117,15 @@ func _make_hud_label(color: Color) -> Label:
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return label
 
+func _make_hud_icon(texture: Texture2D) -> TextureRect:
+	var icon: TextureRect = TextureRect.new()
+	icon.texture = texture
+	icon.custom_minimum_size = Vector2(40, 40)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return icon
+
 func _make_hud_button(text: String) -> Button:
 	var button: Button = Button.new()
 	button.text = text
@@ -129,8 +154,10 @@ func update_gold(gold: int) -> void:
 	if _gold_label:
 		_gold_label.text = "金币: %d" % gold
 
-func update_health(_health: int) -> void:
-	pass
+func update_health(health: int) -> void:
+	if _health_label:
+		var max_health: int = maxi(GameManager.max_village_health, health)
+		_health_label.text = "生命: %d/%d" % [health, max_health]
 
 func update_wave(current: int, total: int) -> void:
 	if _wave_label:
